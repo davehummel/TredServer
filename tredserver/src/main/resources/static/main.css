@@ -1,0 +1,19 @@
+
+
+table {
+    border-collapse: collapse;
+}
+
+td, th {
+    border: 0px solid #999;
+    text-align: left;
+}
+
+button {
+    width: 100px;
+}
+td.l1 {
+    float: left;
+    width: 150px;
+    height: 30px;
+}

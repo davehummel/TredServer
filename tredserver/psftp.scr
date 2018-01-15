@@ -1,0 +1,3 @@
+put target/tredserver-1.0-SNAPSHOT.jar tredserver-1.0-SNAPSHOT.jar
+chmod 777 tredserver-1.0-SNAPSHOT.jar
+exit

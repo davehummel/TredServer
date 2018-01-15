@@ -1,0 +1,36 @@
+all.iml
+*/*.iml
+*.iml
+version
+*/version
+target
+*/target
+.classpath
+*/.classpath
+.project
+*/.project
+.settings
+*/.settings
+.metadata
+*/.metadata
+node_modules
+*/node_modules
+.idea
+*~
+/*/src/main/*/META-INF/
+# xcode noise
+*.xcodeproj/
+!*.xcodeproj/project.pbxproj
+*~.nib/
+
+# IntelliJ stuff
+exportToHTML
+
+# log files
+*.log
+
+# MacOS files
+.DS_Store
+
+# Application Configuration
+application.properties
