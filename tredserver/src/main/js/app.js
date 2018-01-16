@@ -380,8 +380,8 @@ class ControlOverview extends React.Component {
                 <tr>
                     <td className="l1">Pump Control</td>
                     <td>
-                    	    <form>
-                    			<button bsStyle="primary" onClick={this.handleClick} formAction="/pump/allOff">Pumps Off</button>
+                    	    <form  >
+                    			<button onClick={this.handleClick} formAction="/pump/allOff">Pumps Off</button>
                     		    <button onClick={this.handleClick} formAction="/pump/allOn">Pumps On</button>
                     		    <button onClick={this.handleClick} formAction="/pump/topoffOff">Topoff Off</button>
                                 <button onClick={this.handleClick} formAction="/pump/topoffOn">Topoff On</button>
@@ -391,7 +391,7 @@ class ControlOverview extends React.Component {
                 <tr>
                    <td className="l1">Light Control</td>
                    <td>
-                       <form>
+                       <form >
                             <button onClick={this.handleClick} formAction="/light/bottomOff">Bottom Off</button>
                             <button onClick={this.handleClick} formAction="/light/bottomOn">Bottom On</button>
                         </form>
@@ -400,8 +400,8 @@ class ControlOverview extends React.Component {
                 <tr>
                    <td className="l1">System</td>
                    <td>
-                           <form>
-                                       <button onClick={this.handleClick} formAction="/reset">Reset</button>
+                           <form >
+							   <button onClick={this.handleClick} formAction="/reset">Reset</button>
                            </form>
                    </td>
                 </tr>
@@ -412,7 +412,7 @@ class ControlOverview extends React.Component {
 
 	handleClick(e) {
         e.preventDefault();
-        client({method: 'GET',path:e.target.formAction});
+        client({method: 'POST',path:e.target.formAction});
     };
 
 

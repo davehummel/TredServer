@@ -47,46 +47,49 @@ public class TempService extends CommandService {
     private AlertService alertService;
 
     @Autowired
-    HistoryService historyService;
+    private SMSSender smsSender;
+
+//    @Autowired
+//    HistoryService historyService;
 
 
     public TempService() {
 
-        historyService.addSupplier("Top Temperature", new ResetingSupplier() {
-            @Override
-            public void resetState() {
-                topTenMinutes.clear();
-            }
-
-            @Override
-            public Double get() {
-                return topTenMinutes.getMean();
-            }
-        });
-
-        historyService.addSupplier("Bottom Temperature", new ResetingSupplier() {
-            @Override
-            public void resetState() {
-                bottomTenMinutes.clear();
-            }
-
-            @Override
-            public Double get() {
-                return bottomTenMinutes.getMean();
-            }
-        });
-
-        historyService.addSupplier("Outside Temperature", new ResetingSupplier() {
-            @Override
-            public void resetState() {
-                outTenMinutes.clear();
-            }
-
-            @Override
-            public Double get() {
-                return outTenMinutes.getMean();
-            }
-        });
+//        historyService.addSupplier("Top Temperature", new ResetingSupplier() {
+//            @Override
+//            public void resetState() {
+//                topTenMinutes.clear();
+//            }
+//
+//            @Override
+//            public Double get() {
+//                return topTenMinutes.getMean();
+//            }
+//        });
+//
+//        historyService.addSupplier("Bottom Temperature", new ResetingSupplier() {
+//            @Override
+//            public void resetState() {
+//                bottomTenMinutes.clear();
+//            }
+//
+//            @Override
+//            public Double get() {
+//                return bottomTenMinutes.getMean();
+//            }
+//        });
+//
+//        historyService.addSupplier("Outside Temperature", new ResetingSupplier() {
+//            @Override
+//            public void resetState() {
+//                outTenMinutes.clear();
+//            }
+//
+//            @Override
+//            public Double get() {
+//                return outTenMinutes.getMean();
+//            }
+//        });
 
 
         listeners.add(new CommandListener() {
@@ -231,13 +234,13 @@ public class TempService extends CommandService {
                     @Override
                     public void alert(Alert parent) {
                         System.out.println("Temperature Alert:" + getStatusDetails());
-                        SMSSender.sendSMS("Temperature Alert:" + getStatusDetails());
+                        smsSender.sendSMS("Temperature Alert:" + getStatusDetails());
                     }
 
                     @Override
                     public void endAlert(Alert parent) {
                         System.out.println("Temperature OK:" + getStatusDetails());
-                        SMSSender.sendSMS("Temperature OK:" + getStatusDetails());
+                        smsSender.sendSMS("Temperature OK:" + getStatusDetails());
                     }
 
                     @Override

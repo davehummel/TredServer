@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,13 +26,13 @@ public class LightController {
     @Autowired
     LightService lightService;
 
-    @RequestMapping("/bottomOn")
+    @PostMapping("/bottomOn")
     public HttpEntity<String> bottomOn(){
         lightService.lightOn();
         return new ResponseEntity<String>("Bottom On", HttpStatus.OK);
     }
 
-    @RequestMapping("/bottomOff")
+    @PostMapping("/bottomOff")
     public HttpEntity<String> bottomOff(){
         lightService.lightOff();
         return new ResponseEntity<String>("Bottom Off", HttpStatus.OK);

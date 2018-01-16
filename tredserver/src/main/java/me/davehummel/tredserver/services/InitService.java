@@ -34,6 +34,8 @@ public class InitService extends CommandService {
 
     @Autowired
     private AlertService alertService;
+    @Autowired
+    private SMSSender smsSender;
 
 
     public InitService() {
@@ -137,20 +139,20 @@ public class InitService extends CommandService {
                     @Override
                     public void alert(Alert parent) {
                         System.out.println("Embedded system is down!");
-                        SMSSender.sendSMS("Embedded system is down!");
+                        smsSender.sendSMS("Embedded system is down!");
                     }
 
                     @Override
                     public void endAlert(Alert parent) {
                         System.out.println("Embedded system is back!");
-                        SMSSender.sendSMS("Embedded system is back!");
+                        smsSender.sendSMS("Embedded system is back!");
                     }
 
                     @Override
                     public void critical(Alert parent) {
                         System.out.println("Restarting Service");
                         InitService.this.triggerEmbeddedRestart();
-                        SMSSender.sendSMS("Attempted embedded restart...");
+                        smsSender.sendSMS("Attempted embedded restart...");
                     }
                 });
 

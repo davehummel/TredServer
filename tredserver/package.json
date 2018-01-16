@@ -1,10 +1,10 @@
 {
-  "name": "spring-data-rest-and-reactjs",
+  "name": "spring-reactjs-fishtank",
   "version": "0.1.0",
-  "description": "ReactJS + Spring",
+  "description": "ReactJS + Spring + a real reef tanl",
   "repository": {
-    "type": "git",
-    "url": "git@github.com:spring-guides/tut-react-and-spring-data-rest.git"
+    "type": "",
+    "url": ""
   },
   "keywords": [
     "rest",
@@ -13,18 +13,16 @@
     "data",
     "react"
   ],
-  "author": "Greg L. Turnquist",
+  "author": "David Hummel",
   "license": "Apache-2.0",
-  "bugs": {
-    "url": "https://github.com/spring-guides/tut-react-and-spring-data-rest/issues"
-  },
-  "homepage": "https://github.com/spring-guides/tut-react-and-spring-data-rest",
+  "homepage": "http://workhourse.technology",
   "dependencies": {
     "react": "^15.3.2",
     "react-dom": "^15.3.2",
     "react-bootstrap": "^0.31.5",
     "rest": "^1.3.1",
-    "webpack": "^1.12.2"
+    "webpack": "^1.12.2",
+    "react-router-dom": "^4.2.0"
   },
   "scripts": {
     "watch": "webpack --watch -d"

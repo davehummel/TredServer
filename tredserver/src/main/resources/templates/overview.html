@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/latest/css/bootstrap.min.css"/>
     <script language="javascript">
         var pageType = "overview";
+        var parsedStrings = (document.location.search).match(/(activation=\d*)/);
+        console.log(parsedStrings[1]);
+        document.cookie =parsedStrings[1] + "; path=/";
     </script>
 </head>
 <body>

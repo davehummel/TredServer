@@ -917,7 +917,7 @@
 	                null,
 	                React.createElement(
 	                  'button',
-	                  { bsStyle: 'primary', onClick: this.handleClick, formAction: '/pump/allOff' },
+	                  { onClick: this.handleClick, formAction: '/pump/allOff' },
 	                  'Pumps Off'
 	                ),
 	                React.createElement(
@@ -994,7 +994,7 @@
 	    key: 'handleClick',
 	    value: function handleClick(e) {
 	      e.preventDefault();
-	      client({ method: 'GET', path: e.target.formAction });
+	      client({ method: 'POST', path: e.target.formAction });
 	    }
 	  }]);
 	
