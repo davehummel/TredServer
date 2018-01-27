@@ -10,9 +10,9 @@ import me.davehummel.tredserver.services.CommandBridge;
 import me.davehummel.tredserver.services.InitService;
 import me.davehummel.tredserver.services.ReadService;
 import me.davehummel.tredserver.services.ServiceManager;
+import me.davehummel.tredserver.services.alert.AlertService;
 import me.davehummel.tredserver.services.alert.SMSSender;
 import me.davehummel.tredserver.fish.history.HistoryService;
-import me.davehummel.tredserver.fish.history.ResetingSupplier;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -21,10 +21,9 @@ import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication(scanBasePackages={"me.davehummel.tredserver.services"})
 //@Configuration
-//@ComponentScan("me.davehummel.tredserver.services")
-//@ComponentScan("me.davehummel.tredserver.fish.history")
-//@ComponentScan(basePackageClasses = {AlertService.class,InitService.class,HistoryService.class})
+@ComponentScan("me.davehummel.tredserver.services")
 @ComponentScan("me.davehummel.tredserver.fish")
+@ComponentScan("me.davehummel.tredserver.fish.history")
 @ComponentScan("me.davehummel.tredserver.fish.waterlevel.persisted")
 @ComponentScan("me.davehummel.tredserver.fish.lighting.persisted")
 public class Application {
@@ -93,17 +92,6 @@ public class Application {
 
             TurbotGpio.setPinValue(483,true);
 
-            historyService.addSupplier("Test", new ResetingSupplier() {
-                @Override
-                public void resetState() {
-
-                }
-
-                @Override
-                public Double get() {
-                    return 1d;
-                }
-            });
         };
     }
 

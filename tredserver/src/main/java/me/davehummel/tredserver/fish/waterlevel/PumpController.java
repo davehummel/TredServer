@@ -25,9 +25,6 @@ public class PumpController {
     @Autowired
     PumpLevelService pumpLevelService;
 
-    @Value("${tank.activationkey}")
-    private String activationKey;
-
     @RequestMapping("/levels")
     public HttpEntity<PumpLevels> getPumpLevel(){
         PumpLevels levels = pumpLevelService.getLevels();

@@ -2,7 +2,7 @@ package me.davehummel.tredserver.fish.services;
 
 import me.davehummel.tredserver.command.*;
 import me.davehummel.tredserver.fish.history.HistoryService;
-import me.davehummel.tredserver.fish.history.ResetingSupplier;
+import me.davehummel.tredserver.fish.history.ResettingSupplier;
 import me.davehummel.tredserver.fish.temperature.readonly.TemperatureReadings;
 import me.davehummel.tredserver.serial.SerialConversionUtil;
 import me.davehummel.tredserver.serial.StandardLine;
@@ -49,48 +49,11 @@ public class TempService extends CommandService {
     @Autowired
     private SMSSender smsSender;
 
-//    @Autowired
-//    HistoryService historyService;
+    @Autowired
+    private HistoryService historyService;
 
 
     public TempService() {
-
-//        historyService.addSupplier("Top Temperature", new ResetingSupplier() {
-//            @Override
-//            public void resetState() {
-//                topTenMinutes.clear();
-//            }
-//
-//            @Override
-//            public Double get() {
-//                return topTenMinutes.getMean();
-//            }
-//        });
-//
-//        historyService.addSupplier("Bottom Temperature", new ResetingSupplier() {
-//            @Override
-//            public void resetState() {
-//                bottomTenMinutes.clear();
-//            }
-//
-//            @Override
-//            public Double get() {
-//                return bottomTenMinutes.getMean();
-//            }
-//        });
-//
-//        historyService.addSupplier("Outside Temperature", new ResetingSupplier() {
-//            @Override
-//            public void resetState() {
-//                outTenMinutes.clear();
-//            }
-//
-//            @Override
-//            public Double get() {
-//                return outTenMinutes.getMean();
-//            }
-//        });
-
 
         listeners.add(new CommandListener() {
 
@@ -127,8 +90,6 @@ public class TempService extends CommandService {
     public void restartEmbedded() {
         // Clearing stats
 
-        System.out.println("Loading intial values");
-
         bridge.writeKill(TEMPINSTRUCTIONID);
 
 
@@ -148,9 +109,42 @@ public class TempService extends CommandService {
 
 
     public void start() {
-        if (alertService == null) {
-            throw new NullPointerException();
-        }
+
+        historyService.addSupplier("Top Temperature", new ResettingSupplier() {
+            @Override
+            public void resetState() {
+                topTenMinutes.clear();
+            }
+
+            @Override
+            public Double get() {
+                return topTenMinutes.getMean();
+            }
+        });
+
+        historyService.addSupplier("Bottom Temperature", new ResettingSupplier() {
+            @Override
+            public void resetState() {
+                bottomTenMinutes.clear();
+            }
+
+            @Override
+            public Double get() {
+                return bottomTenMinutes.getMean();
+            }
+        });
+
+        historyService.addSupplier("Outside Temperature", new ResettingSupplier() {
+            @Override
+            public void resetState() {
+                outTenMinutes.clear();
+            }
+
+            @Override
+            public Double get() {
+                return outTenMinutes.getMean();
+            }
+        });
 
         Alert alert = new Alert() {
 

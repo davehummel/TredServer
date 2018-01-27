@@ -4,6 +4,17 @@ const React = require('react');
 const ReactDOM = require('react-dom')
 const client = require('./client');
 
+const ReactHighcharts = require('react-highcharts'); // Expects that Highcharts was loaded in the code.
+
+var config = {
+    xAxis: {
+        categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    },
+    series: [{
+        data: [29.9, 71.5, 106.4, 129.2, 144.0, 176.0, 135.6, 148.5, 216.4, 194.1, 295.6, 454.4]
+    }]
+};
+
 class PumpApp extends React.Component {
 
 	constructor(props) {
@@ -265,6 +276,9 @@ class OverviewApp extends React.Component {
             	            <tr><td><TemperatureOverview/></td></tr>
             	            <tr><td><PumpOverview/></td></tr>
             	            <tr><td><ControlOverview/></td></tr>
+							<tr><td>
+								<ReactHighcharts config = {config}></ReactHighcharts>
+							</td></tr>
             		</tbody>
             	</table>
             </div>

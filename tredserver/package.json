@@ -1,7 +1,7 @@
 {
   "name": "spring-reactjs-fishtank",
   "version": "0.1.0",
-  "description": "ReactJS + Spring + a real reef tanl",
+  "description": "ReactJS + Spring + a an actual fish tank",
   "repository": {
     "type": "",
     "url": ""
@@ -22,7 +22,8 @@
     "react-bootstrap": "^0.31.5",
     "rest": "^1.3.1",
     "webpack": "^1.12.2",
-    "react-router-dom": "^4.2.0"
+    "react-router-dom": "^4.2.0",
+    "react-highcharts": "^16.0.0"
   },
   "scripts": {
     "watch": "webpack --watch -d"

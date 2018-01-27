@@ -29,14 +29,14 @@ public class BasicController {
         return failed?"Failed ":"Ran " + command;
     }
 
-    @RequestMapping(value = "/read",method = RequestMethod.GET)
+    @RequestMapping(value = "/read",method = RequestMethod.POST)
     String readValue(@RequestParam(value="type") String rawType,@RequestParam(value="module") String module, @RequestParam(value="address") String address) {
         DataType type = DataType.valueOf(rawType);
         ReadService.ReadValue out = readService.getValueNow(type, module.charAt(0), address, 500);
         return "Read "+out;
     }
 
-    @RequestMapping(value = "/reset",method = RequestMethod.GET)
+    @RequestMapping(value = "/reset",method = RequestMethod.POST)
     String readValue() {
         TurbotGpio.setPinValue(483,false);
         try {

@@ -1,5 +1,8 @@
 package me.davehummel.tredserver.fish.history;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.format.annotation.DateTimeFormat;
+
 import javax.persistence.*;
 import java.util.Date;
 import java.util.HashMap;
@@ -13,6 +16,7 @@ public class HistoryEvent {
 
     @Id
     @Column(unique = true)
+    @JsonFormat//(pattern = "yyyy-MM-ddThh:mm:ss" )
     private Date time;
 
     @ElementCollection(fetch = FetchType.EAGER)

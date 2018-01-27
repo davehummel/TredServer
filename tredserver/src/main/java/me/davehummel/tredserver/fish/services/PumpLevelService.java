@@ -2,6 +2,8 @@ package me.davehummel.tredserver.fish.services;
 
 import me.davehummel.tredserver.command.*;
 import me.davehummel.tredserver.command.math.InterpType;
+import me.davehummel.tredserver.fish.history.HistoryService;
+import me.davehummel.tredserver.fish.history.ResettingSupplier;
 import me.davehummel.tredserver.fish.waterlevel.LevelInterpUtility;
 import me.davehummel.tredserver.fish.waterlevel.persisted.gyre.GyreInterpolation;
 import me.davehummel.tredserver.fish.waterlevel.persisted.gyre.GyreInterpolationRepository;
@@ -86,6 +88,7 @@ public class PumpLevelService extends CommandService {
     private float totalDepth = 0;
     private DescriptiveStatistics depthFiveMin = new DescriptiveStatistics(30);
     private int leftLevelLoss, rightLevelLoss, pumpControlLoss;
+    private int topoffStatCount=0;
 
     @Autowired
     SMSSender smsSender;
@@ -102,6 +105,9 @@ public class PumpLevelService extends CommandService {
     @Autowired
     private AlertService alertService;
 
+    @Autowired
+    private HistoryService historyService;
+
     private int topoffCount;
 
 
@@ -114,17 +120,19 @@ public class PumpLevelService extends CommandService {
                 return line.instructionID == PUMPLEVELPINGID;
             }
 
-
             @Override
             protected void processData(StandardLine line) {
                 float temp = 0;
                 temp = SerialConversionUtil.getFloat(line.raw, 5);
                 if (0 <= temp && temp <= 40)
-                    leftLevel = temp;
+                    leftLevel = (float)((double)temp); // this is done to try to correct for a very strange
+                // conversion error.  Sometimes the arm processor is returning a number that looks correct by itself
+                // but give massively wrong (e32) results when added to another number in java.
+                // probably some difference in edge case encoding.
 
                 temp = SerialConversionUtil.getFloat(line.raw, 9);
                 if (0 <= temp && temp <= 40)
-                    rightLevel = temp;
+                    rightLevel = (float)((double)temp); // See above for this issue
 
                 leftFloat1 = SerialConversionUtil.getFloat(line.raw, 13);
                 leftFloat2 = SerialConversionUtil.getFloat(line.raw, 17);
@@ -134,7 +142,7 @@ public class PumpLevelService extends CommandService {
                 totalDepth = rightLevel + leftLevel;
                 depthFiveMin.addValue(totalDepth);
                 if ((System.currentTimeMillis() / 1000 % 10 == 1)) {
-                    if (totalDepth > 12 && leftFloat1 == 1) {
+                    if (totalDepth > 12 && totalDepth <20 && leftFloat1 == 1) {
                         topoffOn();
                         System.out.println("Topping Off");
                         topoffCount++;
@@ -283,215 +291,211 @@ public class PumpLevelService extends CommandService {
 
 
     public void start() {
-        if (alertService == null) {
-            throw new NullPointerException();
-        } else {
 
-            Alert topoffAlert = new Alert() {
+        Alert topoffAlert = new Alert() {
 
-                @Override
-                public Trigger getTimingTrigger() {
-                    return new PeriodicTrigger(1, TimeUnit.MINUTES);
+            @Override
+            public Trigger getTimingTrigger() {
+                return new PeriodicTrigger(1, TimeUnit.MINUTES);
+            }
+
+            @Override
+            public void validate() {
+
+            }
+
+            @Override
+            public String getDescription() {
+                return "Top off tank has water remaining";
+            }
+
+            @Override
+            public String getName() {
+                return "Top off level";
+            }
+
+            @Override
+            public AlertStatus getStatus() {
+                if ((topoffCount > 20) || leftFloat1 == 0 || totalDepth > 14) { // TODO include float levels in this alert
+                    return AlertStatus.Alerting;
+                } else {
+                    return AlertStatus.Safe;
                 }
+            }
 
-                @Override
-                public void validate() {
+            @Override
+            public String getStatusDetails() {
+                return "Depth is " + totalDepth + " top off count is " + topoffCount + " and top float is " + ((leftFloat2 == 1) ? "up" : "down") + ", bottom is " + ((leftFloat1 == 1) ? "up" : "down");
+            }
 
-                }
+            @Override
+            public int getMinimumNotifyDurationMS() {
+                return 1000 * 60 * 60;
+            }
 
-                @Override
-                public String getDescription() {
-                    return "Top off tank has water remaining";
-                }
-
-                @Override
-                public String getName() {
-                    return "Top off level";
-                }
-
-                @Override
-                public AlertStatus getStatus() {
-                    if ((topoffCount > 20) || leftFloat1 == 0 || totalDepth > 14) { // TODO include float levels in this alert
-                        return AlertStatus.Alerting;
-                    } else {
-                        return AlertStatus.Safe;
-                    }
-                }
-
-                @Override
-                public String getStatusDetails() {
-                    return "Depth is " + totalDepth + " top off count is " + topoffCount + " and top float is " + ((leftFloat2 == 1) ? "up" : "down") + ", bottom is " + ((leftFloat1 == 1) ? "up" : "down");
-                }
-
-                @Override
-                public int getMinimumNotifyDurationMS() {
-                    return 1000 * 60 * 60;
-                }
-
-                @Override
-                public List<NotifyAction> getNotifyActions() {
-                    List<NotifyAction> list = new ArrayList<>();
-                    list.add(new NotifyAction() {
-                        @Override
-                        public void alert(Alert parent) {
-                            System.out.println("Top off Alert:" + getStatusDetails());
-                            smsSender.sendSMS("Top off Alert:" + getStatusDetails());
-                        }
-
-                        @Override
-                        public void endAlert(Alert parent) {
-                            smsSender.sendSMS("Top off OK:" + getStatusDetails());
-                        }
-
-                        @Override
-                        public void critical(Alert parent) {
-                        }
-                    });
-
-                    return list;
-                }
-            };
-
-            Alert floodAlert = new Alert() {
-
-                @Override
-                public Trigger getTimingTrigger() {
-                    return new PeriodicTrigger(1, TimeUnit.MINUTES);
-                }
-
-                @Override
-                public void validate() {
-
-                }
-
-                @Override
-                public String getDescription() {
-                    return "Warn if top or bottom tank are over full using floats.";
-                }
-
-                @Override
-                public String getName() {
-                    return "Flood check";
-                }
-
-                @Override
-                public AlertStatus getStatus() {
-                    if ((rightFloat1 == 1) || rightFloat2 == 1) { // TODO include float levels in this alert
-                        return AlertStatus.Alerting;
-                    } else {
-                        return AlertStatus.Safe;
-                    }
-                }
-
-                @Override
-                public String getStatusDetails() {
-                    return "Tank full float was tripped : " + (rightFloat1 == 1 ? "Top " : " ") + (rightFloat2 == 1 ? "Bottom" : " ");
-                }
-
-                @Override
-                public int getMinimumNotifyDurationMS() {
-                    return 1000 * 60 * 10;
-                }
-
-                @Override
-                public List<NotifyAction> getNotifyActions() {
-                    List<NotifyAction> list = new ArrayList<>();
-                    list.add(new NotifyAction() {
-                        @Override
-                        public void alert(Alert parent) {
-                            System.out.println("TANK FLOOD Alert:" + getStatusDetails());
-                            smsSender.sendSMS("TANK FLOOD Alert:" + getStatusDetails());
-                        }
-
-                        @Override
-                        public void endAlert(Alert parent) {
-                            smsSender.sendSMS("TANK FLOOD OK.  No floats tripped");
-                        }
-
-                        @Override
-                        public void critical(Alert parent) {
-                        }
-                    });
-
-                    return list;
-                }
-            };
-
-
-            Alert pumpOnAlert = new Alert() {
-
-
-                private int zeroPumpCounter = 0;
-
-                @Override
-                public Trigger getTimingTrigger() {
-                    return new PeriodicTrigger(1, TimeUnit.MINUTES);
-                }
-
-                @Override
-                public void validate() {
-
-                    if (leftPower == 0 || rightPower == 0) {
-                        zeroPumpCounter++;
-                    } else {
-                        zeroPumpCounter = 0;
+            @Override
+            public List<NotifyAction> getNotifyActions() {
+                List<NotifyAction> list = new ArrayList<>();
+                list.add(new NotifyAction() {
+                    @Override
+                    public void alert(Alert parent) {
+                        System.out.println("Top off Alert:" + getStatusDetails());
+                        smsSender.sendSMS("Top off Alert:" + getStatusDetails());
                     }
 
+                    @Override
+                    public void endAlert(Alert parent) {
+                        smsSender.sendSMS("Top off OK:" + getStatusDetails());
+                    }
+
+                    @Override
+                    public void critical(Alert parent) {
+                    }
+                });
+
+                return list;
+            }
+        };
+
+        Alert floodAlert = new Alert() {
+
+            @Override
+            public Trigger getTimingTrigger() {
+                return new PeriodicTrigger(1, TimeUnit.MINUTES);
+            }
+
+            @Override
+            public void validate() {
+
+            }
+
+            @Override
+            public String getDescription() {
+                return "Warn if top or bottom tank are over full using floats.";
+            }
+
+            @Override
+            public String getName() {
+                return "Flood check";
+            }
+
+            @Override
+            public AlertStatus getStatus() {
+                if ((rightFloat1 == 1) || rightFloat2 == 1) { // TODO include float levels in this alert
+                    return AlertStatus.Alerting;
+                } else {
+                    return AlertStatus.Safe;
+                }
+            }
+
+            @Override
+            public String getStatusDetails() {
+                return "Tank full float was tripped : " + (rightFloat1 == 1 ? "Top " : " ") + (rightFloat2 == 1 ? "Bottom" : " ");
+            }
+
+            @Override
+            public int getMinimumNotifyDurationMS() {
+                return 1000 * 60 * 10;
+            }
+
+            @Override
+            public List<NotifyAction> getNotifyActions() {
+                List<NotifyAction> list = new ArrayList<>();
+                list.add(new NotifyAction() {
+                    @Override
+                    public void alert(Alert parent) {
+                        System.out.println("TANK FLOOD Alert:" + getStatusDetails());
+                        smsSender.sendSMS("TANK FLOOD Alert:" + getStatusDetails());
+                    }
+
+                    @Override
+                    public void endAlert(Alert parent) {
+                        smsSender.sendSMS("TANK FLOOD OK.  No floats tripped");
+                    }
+
+                    @Override
+                    public void critical(Alert parent) {
+                    }
+                });
+
+                return list;
+            }
+        };
+
+
+        Alert pumpOnAlert = new Alert() {
+
+
+            private int zeroPumpCounter = 0;
+
+            @Override
+            public Trigger getTimingTrigger() {
+                return new PeriodicTrigger(1, TimeUnit.MINUTES);
+            }
+
+            @Override
+            public void validate() {
+
+                if (leftPower == 0 || rightPower == 0) {
+                    zeroPumpCounter++;
+                } else {
+                    zeroPumpCounter = 0;
                 }
 
-                @Override
-                public String getDescription() {
-                    return "Pumps levels are not zero for more than 10 minutes";
-                }
+            }
 
-                @Override
-                public String getName() {
-                    return "Pumps not zero";
-                }
+            @Override
+            public String getDescription() {
+                return "Pumps levels are not zero for more than 10 minutes";
+            }
 
-                @Override
-                public AlertStatus getStatus() {
-                    return zeroPumpCounter >= 10 ? AlertStatus.Alerting : AlertStatus.Safe;
-                }
+            @Override
+            public String getName() {
+                return "Pumps not zero";
+            }
 
-                @Override
-                public String getStatusDetails() {
-                    return "Pumps off for  " + zeroPumpCounter + " minutes";
-                }
+            @Override
+            public AlertStatus getStatus() {
+                return zeroPumpCounter >= 10 ? AlertStatus.Alerting : AlertStatus.Safe;
+            }
 
-                @Override
-                public int getMinimumNotifyDurationMS() {
-                    return 1000 * 60 * 60;
-                }
+            @Override
+            public String getStatusDetails() {
+                return "Pumps off for  " + zeroPumpCounter + " minutes";
+            }
 
-                @Override
-                public List<NotifyAction> getNotifyActions() {
-                    List<NotifyAction> list = new ArrayList<>();
-                    list.add(new NotifyAction() {
-                        @Override
-                        public void alert(Alert parent) {
-                            System.out.println("Pumps off for " + zeroPumpCounter + " minutes. Attempting to turn on...");
-                            smsSender.sendSMS("Pumps off for " + zeroPumpCounter + " minutes.  Attempting to turn on...");
-                            allPumpsOn();
-                        }
+            @Override
+            public int getMinimumNotifyDurationMS() {
+                return 1000 * 60 * 60;
+            }
 
-                        @Override
-                        public void endAlert(Alert parent) {
-                            smsSender.sendSMS("Pumps back online");
-                        }
+            @Override
+            public List<NotifyAction> getNotifyActions() {
+                List<NotifyAction> list = new ArrayList<>();
+                list.add(new NotifyAction() {
+                    @Override
+                    public void alert(Alert parent) {
+                        System.out.println("Pumps off for " + zeroPumpCounter + " minutes. Attempting to turn on...");
+                        smsSender.sendSMS("Pumps off for " + zeroPumpCounter + " minutes.  Attempting to turn on...");
+                        allPumpsOn();
+                    }
 
-                        @Override
-                        public void critical(Alert parent) {
-                        }
-                    });
+                    @Override
+                    public void endAlert(Alert parent) {
+                        smsSender.sendSMS("Pumps back online");
+                    }
 
-                    return list;
-                }
-            };
-            alertService.loadAlert(topoffAlert);
-            alertService.loadAlert(pumpOnAlert);
-            alertService.loadAlert(floodAlert);
-        }
+                    @Override
+                    public void critical(Alert parent) {
+                    }
+                });
+
+                return list;
+            }
+        };
+        alertService.loadAlert(topoffAlert);
+        alertService.loadAlert(pumpOnAlert);
+        alertService.loadAlert(floodAlert);
 
 
         PumpInstruction inst = pumpInstructionRepository.findOne(OFFINST);
@@ -539,6 +543,66 @@ public class PumpLevelService extends CommandService {
             pumpInstructionRepository.save(inst);
         }
 
+        historyService.addSupplier("Left Pump Level", new ResettingSupplier() {
+            @Override
+            public void resetState() {
+
+            }
+
+            @Override
+            public Double get() {
+                return (double)leftLevel;
+            }
+        });
+
+        historyService.addSupplier("Right Pump Level", new ResettingSupplier() {
+            @Override
+            public void resetState() {
+
+            }
+
+            @Override
+            public Double get() {
+                return (double)rightLevel;
+            }
+        });
+
+        historyService.addSupplier("Left Pump Power", new ResettingSupplier() {
+            @Override
+            public void resetState() {
+
+            }
+
+            @Override
+            public Double get() {
+                return (double)leftPower;
+            }
+        });
+
+        historyService.addSupplier("Right Pump Power", new ResettingSupplier() {
+            @Override
+            public void resetState() {
+
+            }
+
+            @Override
+            public Double get() {
+                return (double)rightPower;
+            }
+        });
+
+        historyService.addSupplier("Topoff Count", new ResettingSupplier() {
+            @Override
+            public void resetState() {
+                topoffStatCount=0;
+            }
+
+            @Override
+            public Double get() {
+                return (double)topoffStatCount;
+            }
+        });
+
     }
 
 
@@ -564,7 +628,7 @@ public class PumpLevelService extends CommandService {
 
     public void topoffOn() {
         bridge.writeInstruction(topoffOn);
-        //    bridge.writeInstruction(topoffOnEnd);
+        topoffStatCount++;
     }
 
     public void topoffOff() {
