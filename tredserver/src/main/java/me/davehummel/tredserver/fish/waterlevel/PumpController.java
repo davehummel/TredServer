@@ -46,14 +46,21 @@ public class PumpController {
 
     @PostMapping("/topoffOn")
     public HttpEntity<String> topOffOn(){
+        pumpLevelService.disableTopOff(0); // remove disable override
         pumpLevelService.topoffOn();
         return new ResponseEntity<String>("Topoff On (for 1 min)", HttpStatus.OK);
     }
 
     @PostMapping("/topoffOff")
-    public HttpEntity<String> topOffOf(){
+    public HttpEntity<String> topOffOff(){
         pumpLevelService.topoffOff();
         return new ResponseEntity<String>("Topoff off", HttpStatus.OK);
+    }
+
+    @PostMapping("/topoffDisable")
+    public HttpEntity<String> topOffDisable(){
+        pumpLevelService.disableTopOff(24*60*60*1000); // 24 hours
+        return new ResponseEntity<String>("Topoff Disabled", HttpStatus.OK);
     }
 
 }

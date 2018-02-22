@@ -26,6 +26,7 @@ import org.springframework.context.annotation.ComponentScan;
 @ComponentScan("me.davehummel.tredserver.fish.history")
 @ComponentScan("me.davehummel.tredserver.fish.waterlevel.persisted")
 @ComponentScan("me.davehummel.tredserver.fish.lighting.persisted")
+
 public class Application {
 
 

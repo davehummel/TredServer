@@ -39,7 +39,7 @@ public class TempService extends CommandService {
     };
 
 
-    private float topTemp, bottomTemp, outTemp;
+    private double topTemp, bottomTemp, outTemp;
 
     private DescriptiveStatistics topTenMinutes = new DescriptiveStatistics(60), bottomTenMinutes = new DescriptiveStatistics(60), outTenMinutes = new DescriptiveStatistics(60);
 
@@ -113,36 +113,36 @@ public class TempService extends CommandService {
         historyService.addSupplier("Top Temperature", new ResettingSupplier() {
             @Override
             public void resetState() {
-                topTenMinutes.clear();
+
             }
 
             @Override
             public Double get() {
-                return topTenMinutes.getMean();
+                return topTemp;
             }
         });
 
         historyService.addSupplier("Bottom Temperature", new ResettingSupplier() {
             @Override
             public void resetState() {
-                bottomTenMinutes.clear();
+
             }
 
             @Override
             public Double get() {
-                return bottomTenMinutes.getMean();
+                return bottomTemp;
             }
         });
 
         historyService.addSupplier("Outside Temperature", new ResettingSupplier() {
             @Override
             public void resetState() {
-                outTenMinutes.clear();
+
             }
 
             @Override
             public Double get() {
-                return outTenMinutes.getMean();
+                return outTemp;
             }
         });
 
@@ -260,7 +260,7 @@ public class TempService extends CommandService {
     }
 
     public TemperatureReadings getReadings() {
-        TemperatureReadings readings = new TemperatureReadings(topTemp, bottomTemp, outTemp, (float) topTenMinutes.getMean(), (float) bottomTenMinutes.getMean(), (float) outTenMinutes.getMean());
+        TemperatureReadings readings = new TemperatureReadings((float)topTemp, (float)bottomTemp, (float)outTemp, (float) topTenMinutes.getMean(), (float) bottomTenMinutes.getMean(), (float) outTenMinutes.getMean());
         return readings;
     }
 }

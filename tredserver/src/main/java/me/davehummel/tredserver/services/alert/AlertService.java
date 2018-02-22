@@ -6,6 +6,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -28,4 +29,13 @@ public class AlertService {
     }
 
 
+    public List<AlertInfo> getAlerts(long timeout) {
+        List <AlertInfo> relevant = new ArrayList<>();
+        long currentTime = System.currentTimeMillis();
+        for (AlertAction action:alerts){
+            if (action.isTriggered() || action.getLastTriggerTime() + timeout >= currentTime)
+                relevant.add(new AlertInfo(new Date(action.getLastTriggerTime()),action.getParent().getStatusDetails(),action.getParent().getDescription(),action.isTriggered()));
+        }
+        return relevant;
+    }
 }

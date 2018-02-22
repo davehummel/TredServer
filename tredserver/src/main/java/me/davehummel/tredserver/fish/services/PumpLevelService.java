@@ -90,6 +90,8 @@ public class PumpLevelService extends CommandService {
     private int leftLevelLoss, rightLevelLoss, pumpControlLoss;
     private int topoffStatCount=0;
 
+    private long topoffDisableTimeMS = 0;
+
     @Autowired
     SMSSender smsSender;
 
@@ -141,13 +143,15 @@ public class PumpLevelService extends CommandService {
 
                 totalDepth = rightLevel + leftLevel;
                 depthFiveMin.addValue(totalDepth);
-                if ((System.currentTimeMillis() / 1000 % 10 == 1)) {
-                    if (totalDepth > 12 && totalDepth <20 && leftFloat1 == 1) {
-                        topoffOn();
-                        System.out.println("Topping Off");
-                        topoffCount++;
-                    } else {
-                        topoffCount = 0;
+                if (topoffDisableTimeMS<=System.currentTimeMillis()) {
+                    if ((System.currentTimeMillis() / 1000 % 10 == 1)) {
+                        if (totalDepth > 12 && totalDepth < 20 && leftFloat1 == 1) {
+                            topoffOn();
+                            System.out.println("Topping Off");
+                            topoffCount++;
+                        } else {
+                            topoffCount = 0;
+                        }
                     }
                 }
             }
@@ -611,7 +615,7 @@ public class PumpLevelService extends CommandService {
     }
 
     public PumpLevels getLevels() {
-        PumpLevels levels = new PumpLevels(new float[]{leftLevel, rightLevel, leftFloat1, leftFloat2, rightFloat1, rightFloat2}, new float[]{leftPower, rightPower, topoffPower}, new float[]{0, 0}, totalDepth, (float) depthFiveMin.getMean(), topoffCount,
+        PumpLevels levels = new PumpLevels(new float[]{leftLevel, rightLevel, leftFloat1, leftFloat2, rightFloat1, rightFloat2}, new float[]{leftPower, rightPower, topoffPower}, new float[]{0, 0}, totalDepth, (float) depthFiveMin.getMean(), topoffStatCount,
                 new String[]{leftHeadOn ? "On" : "Off", rightHeadOn ? "On" : "Off"}, new Date[]{leftHeadChangeTime, rightHeadChangeTime}, new int[]{leftLevelLoss, rightLevelLoss, pumpControlLoss});
         return levels;
     }
@@ -633,5 +637,9 @@ public class PumpLevelService extends CommandService {
 
     public void topoffOff() {
         bridge.writeInstruction(topoffOff);
+    }
+
+    public void disableTopOff(long disableDurationMS){
+        this.topoffDisableTimeMS = System.currentTimeMillis()+disableDurationMS;
     }
 }

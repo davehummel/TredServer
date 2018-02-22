@@ -1,19 +1,136 @@
-
-
-table {
-    border-collapse: collapse;
+html, body {
+    margin:0;
+    padding:0;
 }
 
-td, th {
-    border: 0px solid #999;
-    text-align: left;
+
+#alert_top_active{
+
+    font-family: 'Alegreya Sans', sans-serif;
+    font-size: 175%;
+    font-weight: bold;
+    color: white;
+    background-color: #D94D3D;
+    padding : 0.01em 16px;
+    white-space:nowrap;
+    overflow:hidden;
 }
 
-button {
-    width: 100px;
+#alert_top_inactive{
+     font-family: 'Alegreya Sans', sans-serif;
+     font-size: 175%;
+     font-weight: bold;
+     color: white;
+     background-color: #17A598;
+     padding : 0.01em 16px;
+     white-space:nowrap;
+     overflow:hidden;
+ }
+
+#alert_bottom{
+    background-color: #F0F0F1;
+    padding : 0.005em 8px;
+    overflow-y: scroll;
+    min-height: 3.2em;
+    max-height: 3.2em;
 }
-td.l1 {
+
+#alert_message{
+    font-family: 'Alegreya Sans', sans-serif;
+    font-size: 125%;
+}
+
+#control_bar{
+    height: 5em;
+    padding:3% 3% 0%;
+}
+
+#control_tag{
+    background-color: transparent;
     float: left;
-    width: 150px;
+    height: 5em;
+    width: 2em;
+}
+
+#control_button_g{
+    background-color: #17A598;
+    color: white;
+    float: left;
+    text-align: center;
+    font-weight: bold;
+    vertical-align: middle;
+    line-height: 250%;
+    height: 100%;
+    width: 30%;
+    font-family: 'Alegreya Sans', sans-serif;
+    font-size: 200%;
+}
+
+#control_button_o{
+    background-color: #F8C890;
+    color: #DB381B;
+    float: left;
+    text-align: center;
+    font-weight: bold;
+    vertical-align: middle;
+    line-height: 250%;
+    height: 100%;
+    width: 30%;
+    font-family: 'Alegreya Sans', sans-serif;
+    font-size: 200%;
+}
+
+#control_button_r{
+    background-color: #DB381B;
+    color: white;
+    float: left;
+    text-align: center;
+    font-weight: bold;
+    vertical-align: middle;
+    line-height: 250%;
+    height: 100%;
+    width: 30%;
+    font-family: 'Alegreya Sans', sans-serif;
+    font-size: 200%;
+}
+
+#control_gap{
+    background-color: #F0F0F1;
+    float: left;
+    width: 2%;
+    height: 100%;
+}
+
+#score_bar{
     height: 30px;
+    padding:3% 3% 0%;
+}
+
+#score_item{
+    color: white;
+    float: left;
+    text-align: center;
+    font-weight: lighter;
+    vertical-align: middle;
+    line-height: 135%;
+    height: 100%;
+    font-family: 'Alegreya Sans', sans-serif;
+    font-size: 135%;
+}
+
+#chart_bar{
+    height: 230px;
+    padding:0% 3% 0%;
+}
+
+#chart_tag{
+    background-color: transparent;
+    float: left;
+    height: 230px;
+    width: 2em;
+}
+
+#chart{
+    width: 94%;
+    float: left;
 }

@@ -1,6 +1,7 @@
 package me.davehummel.tredserver.services;
 
 import me.davehummel.tredserver.command.*;
+import me.davehummel.tredserver.gpio.TurbotGpio;
 import me.davehummel.tredserver.serial.StandardLine;
 import me.davehummel.tredserver.serial.TimeLine;
 import me.davehummel.tredserver.services.alert.*;
@@ -98,9 +99,9 @@ public class InitService extends CommandService {
             @Override
             public void validate() {
                 long delta = System.currentTimeMillis() - lastDatePing;
-                if ( delta > 30000){
+                if ( delta > 300000){
                     status = AlertStatus.Alerting;
-                }else if (delta > 20000){
+                }else if (delta > 60000){
                     status = AlertStatus.Critical;
                 } else {
                     status = AlertStatus.Safe;
@@ -151,7 +152,13 @@ public class InitService extends CommandService {
                     @Override
                     public void critical(Alert parent) {
                         System.out.println("Restarting Service");
-                        InitService.this.triggerEmbeddedRestart();
+                        TurbotGpio.setPinValue(483,false);
+                        try {
+                            Thread.currentThread().sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        TurbotGpio.setPinValue(483,true);
                         smsSender.sendSMS("Attempted embedded restart...");
                     }
                 });
@@ -161,7 +168,7 @@ public class InitService extends CommandService {
 
         };
 
-        lastDatePing = System.currentTimeMillis();
+        lastDatePing = System.currentTimeMillis()+60000; // Give this guy time to startup before alerts go
        alertService.loadAlert(alert);
 
     }

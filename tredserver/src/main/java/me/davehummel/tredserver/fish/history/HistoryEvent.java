@@ -1,45 +1,44 @@
 package me.davehummel.tredserver.fish.history;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import org.springframework.format.annotation.DateTimeFormat;
-
-import javax.persistence.*;
+import javax.persistence.EmbeddedId;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Created by dmhum_000 on 7/2/2017.
  */
 @Entity
+@Table( name = "history")
 public class HistoryEvent {
 
-    @Id
-    @Column(unique = true)
-    @JsonFormat//(pattern = "yyyy-MM-ddThh:mm:ss" )
-    private Date time;
+    @EmbeddedId
+    private HistoryID id;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "HISTORY_MAP", joinColumns = @JoinColumn(name = "time"))
-    @MapKeyColumn(name = "mapKey")
-    @Column(name = "mapValue")
-    private Map<String, Double> values = new HashMap<String, Double>();
+    Double value;
 
-    protected HistoryEvent(){};
+    public HistoryEvent(){}
 
-    public Date getTime() {
-        return time;
+    public HistoryEvent (Date time,String name, Double value){
+        this.id = new HistoryID();
+        id.setDate(time);
+        id.setName(name);
+        this.value = value;
     }
 
-    public void setTime(Date time) {
-        this.time = time;
+    public HistoryID getId() {
+        return id;
     }
 
-    public Map<String, Double> getValues() {
-        return values;
+    public void setId(HistoryID id) {
+        this.id = id;
     }
 
-    public void setValues(Map<String, Double> values) {
-        this.values = values;
+    public Double getValue() {
+        return value;
+    }
+
+    public void setValue(Double value) {
+        this.value = value;
     }
 }

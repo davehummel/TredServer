@@ -40,18 +40,17 @@ public class HistoryService {
     }
 
     private void saveSources(Date date) {
-        HistoryEvent event = new HistoryEvent();
-        event.setTime(date);
         for (Map.Entry<String, ResettingSupplier> entry: suppliers.entrySet()){
             try{
-                event.getValues().put(entry.getKey(),entry.getValue().get());
+                HistoryEvent event = new HistoryEvent(date,entry.getKey(),entry.getValue().get());
                 entry.getValue().resetState();
+                historyEventRepository.save(event);
             }catch (Exception e){
                 System.err.println("History failed to capture metric");
                 e.printStackTrace();
             }
         }
-        historyEventRepository.save(event);
+
     }
 
     public void addSupplier(String name, ResettingSupplier supplier){
@@ -62,6 +61,6 @@ public class HistoryService {
         Date fromDate = Date.from(from.atZone(ZoneId.systemDefault()).toInstant());
         Date toDate = Date.from(to.atZone(ZoneId.systemDefault()).toInstant());
 
-        return historyEventRepository.findAllByTimeBetweenOrderByTimeDesc(fromDate,toDate);
+        return historyEventRepository.findAllByIdDateBetween(fromDate,toDate);
     }
 }

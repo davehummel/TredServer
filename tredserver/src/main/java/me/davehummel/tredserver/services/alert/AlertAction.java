@@ -1,10 +1,12 @@
 package me.davehummel.tredserver.services.alert;
 
+import javax.persistence.Entity;
 import java.util.List;
 
 /**
  * Created by dmhum_000 on 4/2/2017.
  */
+
 public class AlertAction implements Runnable {
 
     public Alert getParent() {
