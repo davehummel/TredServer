@@ -456,6 +456,8 @@
 	                    React.createElement(WaterLevelChart, null),
 	                    React.createElement(PumpOverview, null),
 	                    React.createElement(PumpChart, null),
+	                    React.createElement(SensorOverview, null),
+	                    React.createElement(SensorChart, null),
 	                    React.createElement(AdminActions, null)
 	                )
 	            );
@@ -587,7 +589,7 @@
 	                    ),
 	                    React.createElement(
 	                        'button',
-	                        { id: 'control_button_g', onClick: this.handleClick, formAction: '/pump/allOn' },
+	                        { id: 'control_button_g', style: { "width": "22%" }, onClick: this.handleClick, formAction: '/pump/allOn' },
 	                        'Enabled'
 	                    ),
 	                    React.createElement(
@@ -597,8 +599,8 @@
 	                    ),
 	                    React.createElement(
 	                        'button',
-	                        { id: 'control_button_o', onClick: this.handleClick, formAction: '/pump/allOff' },
-	                        'Pause'
+	                        { id: 'control_button_o', style: { "width": "22%" }, onClick: this.handleClick, formAction: '/pump/allOff' },
+	                        'Pause (5m)'
 	                    ),
 	                    React.createElement(
 	                        'div',
@@ -607,28 +609,8 @@
 	                    ),
 	                    React.createElement(
 	                        'button',
-	                        { id: 'control_button_o', onClick: this.handleClick, formAction: '/pump/maxFlow' },
-	                        'Max Flow'
-	                    )
-	                ),
-	                React.createElement(
-	                    'div',
-	                    { id: 'control_bar' },
-	                    React.createElement(
-	                        'svg',
-	                        { id: 'control_tag', viewBox: viewControlTag },
-	                        React.createElement('rect', { x: 0, y: 0, rx: 80, ry: 80, width: 400, height: 500, fill: "#D5D8C8" }),
-	                        React.createElement(
-	                            'text',
-	                            { fontFamily: "Alegreya Sans", fill: "#17A598", fontSize: 140,
-	                                transform: " rotate(-90 0,0) translate(-430,150) " },
-	                            'Topoff'
-	                        )
-	                    ),
-	                    React.createElement(
-	                        'button',
-	                        { id: 'control_button_g', onClick: this.handleClick, formAction: '/pump/topoffOn' },
-	                        'Enabled'
+	                        { id: 'control_button_g', style: { "width": "22%" }, onClick: this.handleClick, formAction: '/pump/topoffOn' },
+	                        'Fill On'
 	                    ),
 	                    React.createElement(
 	                        'div',
@@ -637,18 +619,8 @@
 	                    ),
 	                    React.createElement(
 	                        'button',
-	                        { id: 'control_button_o', onClick: this.handleClick, formAction: '/pump/topoffOff' },
-	                        'Pause'
-	                    ),
-	                    React.createElement(
-	                        'div',
-	                        { id: 'control_gap' },
-	                        React.createElement('p', null)
-	                    ),
-	                    React.createElement(
-	                        'button',
-	                        { id: 'control_button_o', onClick: this.handleClick, formAction: '/pump/topoffDisable' },
-	                        'Disable(24h)'
+	                        { id: 'control_button_o', style: { "width": "22%" }, onClick: this.handleClick, formAction: '/pump/topoffDisable' },
+	                        'Fill Off(24h)'
 	                    )
 	                )
 	            );
@@ -1292,13 +1264,13 @@
 	                    'div',
 	                    { id: 'score_item', style: { "width": "25%", "backgroundColor": "#8A888B" } },
 	                    'Left Head ',
-	                    this.state.headsOn[0] == 1 ? "On" : "Off"
+	                    this.state.headsOn[0]
 	                ),
 	                React.createElement(
 	                    'div',
 	                    { id: 'score_item', style: { "width": "24%", "backgroundColor": "#adabae" } },
 	                    'Right Head ',
-	                    this.state.headsOn[1] == 1 ? "On" : "Off"
+	                    this.state.headsOn[1]
 	                )
 	            );
 	        }
@@ -1307,16 +1279,270 @@
 	    return PumpOverview;
 	}(React.Component);
 	
-	var AdminActions = function (_React$Component15) {
-	    _inherits(AdminActions, _React$Component15);
+	var SensorChart = function (_React$Component15) {
+	    _inherits(SensorChart, _React$Component15);
+	
+	    function SensorChart(props) {
+	        _classCallCheck(this, SensorChart);
+	
+	        var _this25 = _possibleConstructorReturn(this, (SensorChart.__proto__ || Object.getPrototypeOf(SensorChart)).call(this, props));
+	
+	        _this25.state = {
+	            config: {
+	                title: {
+	                    title: {
+	                        text: null
+	                    }
+	                },
+	                chart: {
+	                    height: '230'
+	                },
+	                legend: {
+	                    enabled: false
+	                },
+	                yAxis: [{
+	                    title: { text: null }
+	                }, {
+	                    title: { text: null }
+	                }, {
+	                    title: { text: null }
+	                }, {
+	                    title: { text: null }
+	                }],
+	                time: {
+	                    useUTC: false
+	                },
+	                series: [{
+	                    name: "Loading...",
+	                    data: [[0, 0]]
+	                }, {
+	                    name: "Loading...",
+	                    data: [[0, 0]]
+	                }, {
+	                    name: "Loading...",
+	                    data: [[0, 0]]
+	                }, {
+	                    name: "Loading...",
+	                    data: [[0, 0]]
+	                }]
+	
+	            }
+	        };
+	        _this25.getSensorHistory = _this25.getSensorHistory.bind(_this25);
+	        return _this25;
+	    }
+	
+	    _createClass(SensorChart, [{
+	        key: 'componentDidMount',
+	        value: function componentDidMount() {
+	            this.getSensorHistory();
+	            setInterval(this.getSensorHistory, 5 * 60 * 1000);
+	        }
+	    }, {
+	        key: 'getSensorHistory',
+	        value: function getSensorHistory() {
+	            var _this26 = this;
+	
+	            client({ method: 'GET', path: '/history/series?filters=ph,salinity,orp,do' }).done(function (response) {
+	                _this26.setState({
+	                    config: {
+	                        plotOptions: {
+	                            line: {
+	                                marker: {
+	                                    enabled: false
+	                                }
+	                            }
+	                        },
+	                        credits: {
+	                            enabled: false
+	                        },
+	                        chart: {
+	                            type: 'line',
+	                            height: '230',
+	                            backgroundColor: '#17A598',
+	                            plotBackgroundColor: '#FFFFFF'
+	                        },
+	                        title: {
+	                            text: null
+	                        },
+	                        legend: {
+	                            enabled: false
+	                        },
+	                        yAxis: [{
+	                            title: { text: null },
+	                            labels: {
+	                                style: {
+	                                    color: '#111111',
+	                                    fontSize: '14px'
+	                                }
+	                            }
+	
+	                        }, {
+	                            title: { text: null },
+	                            labels: {
+	                                style: {
+	                                    color: '#F0806C',
+	                                    fontSize: '14px'
+	                                }
+	                            },
+	                            opposite: true
+	                        }, {
+	                            title: { text: null },
+	                            labels: {
+	                                style: {
+	                                    color: '#30608B',
+	                                    fontSize: '14px'
+	                                }
+	                            }
+	
+	                        }, {
+	                            title: { text: null },
+	                            labels: {
+	                                style: {
+	                                    color: '#DB381B',
+	                                    fontSize: '14px'
+	                                }
+	                            },
+	                            opposite: true
+	                        }],
+	                        xAxis: {
+	                            type: 'datetime',
+	                            labels: {
+	                                style: {
+	                                    color: '#FFFFFF',
+	                                    fontSize: '15px'
+	                                }
+	                            }
+	                        },
+	                        series: response.entity
+	                    }
+	                });
+	            });
+	        }
+	    }, {
+	        key: 'render',
+	        value: function render() {
+	            var config = this.state.config;
+	            // for (i = 0; i < 4 ; i++){
+	            //     config.series[i].yAxis = i;
+	            //     config.series[i].color = config.yAxis[i].labels.style.color;
+	            // }
+	            config.series[3].color = '#DB381B';
+	            config.series[2].color = '#30608B';
+	            config.series[1].color = '#F0806C';
+	            config.series[0].color = '#111111';
+	            config.series[3].yAxis = 3;
+	            config.series[2].yAxis = 2;
+	            config.series[1].yAxis = 1;
+	            config.series[0].yAxis = 0;
+	            var viewControlTag = [0, 0, 200, 1500].join(' ');
+	            return React.createElement(
+	                'div',
+	                { id: 'chart_bar' },
+	                React.createElement(
+	                    'svg',
+	                    { id: 'chart_tag', viewBox: viewControlTag },
+	                    React.createElement('rect', { x: 0, y: -100, rx: 80, ry: 80, width: 400, height: 1600, fill: "#17A598" }),
+	                    React.createElement(
+	                        'text',
+	                        { fontFamily: "Alegreya Sans", fill: "#F0F0F1", fontSize: 140,
+	                            transform: " rotate(-90 0,0) translate(-1060,150) " },
+	                        'Sensors'
+	                    )
+	                ),
+	                React.createElement(
+	                    'div',
+	                    { id: 'chart' },
+	                    React.createElement(ReactHighcharts, { config: config })
+	                )
+	            );
+	        }
+	    }]);
+	
+	    return SensorChart;
+	}(React.Component);
+	
+	var SensorOverview = function (_React$Component16) {
+	    _inherits(SensorOverview, _React$Component16);
+	
+	    function SensorOverview(props) {
+	        _classCallCheck(this, SensorOverview);
+	
+	        var _this27 = _possibleConstructorReturn(this, (SensorOverview.__proto__ || Object.getPrototypeOf(SensorOverview)).call(this, props));
+	
+	        _this27.state = {};
+	        _this27.getSensorData = _this27.getSensorData.bind(_this27);
+	        return _this27;
+	    }
+	
+	    _createClass(SensorOverview, [{
+	        key: 'componentDidMount',
+	        value: function componentDidMount() {
+	            this.getSensorData();
+	            setInterval(this.getSensorData, 8000);
+	        }
+	    }, {
+	        key: 'getSensorData',
+	        value: function getSensorData() {
+	            var _this28 = this;
+	
+	            client({ method: 'GET', path: '/environment/readings' }).done(function (response) {
+	                _this28.setState({
+	                    ph: response.entity.ph.toFixed(2),
+	                    orp: response.entity.orp.toFixed(0),
+	                    salinity: response.entity.salinity.toFixed(0),
+	                    do: response.entity.dissolvedO.toFixed(2)
+	                });
+	            });
+	        }
+	    }, {
+	        key: 'render',
+	        value: function render() {
+	
+	            return React.createElement(
+	                'div',
+	                { id: 'score_bar' },
+	                React.createElement(
+	                    'div',
+	                    { id: 'score_item', style: { "width": "25%", "backgroundColor": "#30608B" } },
+	                    'PH ',
+	                    this.state.ph
+	                ),
+	                React.createElement(
+	                    'div',
+	                    { id: 'score_item', style: { "width": "25%", "backgroundColor": "#DB381B" } },
+	                    'Salinity (sg) ',
+	                    this.state.salinity
+	                ),
+	                React.createElement(
+	                    'div',
+	                    { id: 'score_item', style: { "width": "25%", "backgroundColor": "#F0806C" } },
+	                    'ORP (mv) ',
+	                    this.state.orp
+	                ),
+	                React.createElement(
+	                    'div',
+	                    { id: 'score_item', style: { "width": "24%", "backgroundColor": "#111111" } },
+	                    'DO (mg/L) ',
+	                    this.state.do
+	                )
+	            );
+	        }
+	    }]);
+	
+	    return SensorOverview;
+	}(React.Component);
+	
+	var AdminActions = function (_React$Component17) {
+	    _inherits(AdminActions, _React$Component17);
 	
 	    function AdminActions(props) {
 	        _classCallCheck(this, AdminActions);
 	
-	        var _this25 = _possibleConstructorReturn(this, (AdminActions.__proto__ || Object.getPrototypeOf(AdminActions)).call(this, props));
+	        var _this29 = _possibleConstructorReturn(this, (AdminActions.__proto__ || Object.getPrototypeOf(AdminActions)).call(this, props));
 	
-	        _this25.state = {};
-	        return _this25;
+	        _this29.state = {};
+	        return _this29;
 	    }
 	
 	    _createClass(AdminActions, [{
@@ -1344,48 +1570,8 @@
 	                        )
 	                    ),
 	                    React.createElement(
-	                        'a',
-	                        { id: 'control_button_g', href: '/pump' },
-	                        'Sensors'
-	                    ),
-	                    React.createElement(
-	                        'div',
-	                        { id: 'control_gap' },
-	                        React.createElement('p', null)
-	                    ),
-	                    React.createElement(
-	                        'a',
-	                        { id: 'control_button_g', href: '/pump' },
-	                        'Logic'
-	                    ),
-	                    React.createElement(
-	                        'div',
-	                        { id: 'control_gap' },
-	                        React.createElement('p', null)
-	                    ),
-	                    React.createElement(
-	                        'a',
-	                        { id: 'control_button_g', href: '/details' },
-	                        'Details'
-	                    )
-	                ),
-	                React.createElement(
-	                    'div',
-	                    { id: 'control_bar' },
-	                    React.createElement(
-	                        'svg',
-	                        { id: 'control_tag', viewBox: viewControlTag },
-	                        React.createElement('rect', { x: 0, y: 0, rx: 80, ry: 80, width: 400, height: 500, fill: "#D5D8C8" }),
-	                        React.createElement(
-	                            'text',
-	                            { fontFamily: "Alegreya Sans", fill: "#17A598", fontSize: 140,
-	                                transform: " rotate(-90 0,0) translate(-430,150) " },
-	                            'Reset'
-	                        )
-	                    ),
-	                    React.createElement(
 	                        'button',
-	                        { id: 'control_button_r', onClick: this.handleClick, formAction: '/reset' },
+	                        { id: 'control_button_r', style: { "width": "22%" }, onClick: this.handleClick, formAction: '/reset' },
 	                        'Reset Hardware'
 	                    ),
 	                    React.createElement(
@@ -1394,8 +1580,18 @@
 	                        React.createElement('p', null)
 	                    ),
 	                    React.createElement(
+	                        'a',
+	                        { id: 'control_button_g', style: { "width": "22%" }, href: '/pump' },
+	                        'Sensors'
+	                    ),
+	                    React.createElement(
+	                        'div',
+	                        { id: 'control_gap' },
+	                        React.createElement('p', null)
+	                    ),
+	                    React.createElement(
 	                        'button',
-	                        { id: 'control_button_r', onClick: this.handleClick, formAction: '/reboot' },
+	                        { id: 'control_button_r', style: { "width": "22%" }, onClick: this.handleClick, formAction: '/reboot' },
 	                        'Reset Server'
 	                    ),
 	                    React.createElement(
@@ -1405,7 +1601,7 @@
 	                    ),
 	                    React.createElement(
 	                        'button',
-	                        { id: 'control_button_r', onClick: this.handleClick, formAction: '/update' },
+	                        { id: 'control_button_r', style: { "width": "22%" }, onClick: this.handleClick, formAction: '/update' },
 	                        'Update Firmware'
 	                    )
 	                )

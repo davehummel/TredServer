@@ -127,21 +127,20 @@ public class PumpLevelService extends CommandService {
                 float temp = 0;
                 temp = SerialConversionUtil.getFloat(line.raw, 5);
                 if (0 <= temp && temp <= 40)
-                    leftLevel = (float)((double)temp); // this is done to try to correct for a very strange
-                // conversion error.  Sometimes the arm processor is returning a number that looks correct by itself
-                // but give massively wrong (e32) results when added to another number in java.
-                // probably some difference in edge case encoding.
+                    leftLevel = temp;
 
                 temp = SerialConversionUtil.getFloat(line.raw, 9);
                 if (0 <= temp && temp <= 40)
-                    rightLevel = (float)((double)temp); // See above for this issue
+                    rightLevel = temp; // See above for this issue
 
                 leftFloat1 = SerialConversionUtil.getFloat(line.raw, 13);
                 leftFloat2 = SerialConversionUtil.getFloat(line.raw, 17);
                 rightFloat1 = SerialConversionUtil.getFloat(line.raw, 21);
                 rightFloat2 = SerialConversionUtil.getFloat(line.raw, 25);
 
-                totalDepth = rightLevel + leftLevel;
+                temp = rightLevel + leftLevel;
+                if (temp > 0 && temp < 999)
+                    totalDepth = temp;
                 depthFiveMin.addValue(totalDepth);
                 if (topoffDisableTimeMS<=System.currentTimeMillis()) {
                     if ((System.currentTimeMillis() / 1000 % 10 == 1)) {

@@ -266,6 +266,8 @@ class OverviewApp extends React.Component {
                     <WaterLevelChart/>
                     <PumpOverview/>
                     <PumpChart/>
+                    <SensorOverview/>
+                    <SensorChart/>
                     <AdminActions/>
                 </div>
             </IntlProvider>
@@ -339,24 +341,13 @@ class CommonActions extends React.Component {
                               transform={" rotate(-90 0,0) translate(-440,150) "}>Pumps
                         </text>
                     </svg>
-                    <button id="control_button_g" onClick={this.handleClick} formAction="/pump/allOn" >Enabled</button>
+                    <button id="control_button_g" style={{"width": "22%"}} onClick={this.handleClick} formAction="/pump/allOn" >Enabled</button>
                     <div id="control_gap"><p></p></div>
-                    <button id="control_button_o" onClick={this.handleClick} formAction="/pump/allOff">Pause</button>
+                    <button id="control_button_o" style={{"width": "22%"}} onClick={this.handleClick} formAction="/pump/allOff">Pause (5m)</button>
                     <div id="control_gap"><p></p></div>
-                    <button id="control_button_o" onClick={this.handleClick} formAction="/pump/maxFlow">Max Flow</button>
-                </div>
-                <div id="control_bar">
-                    <svg id="control_tag" viewBox={viewControlTag}>
-                        <rect x={0} y={0} rx={80} ry={80} width={400} height={500} fill={"#D5D8C8"}/>
-                        <text fontFamily={"Alegreya Sans"} fill={"#17A598"} fontSize={140}
-                              transform={" rotate(-90 0,0) translate(-430,150) "}>Topoff
-                        </text>
-                    </svg>
-                    <button id="control_button_g" onClick={this.handleClick} formAction="/pump/topoffOn" >Enabled</button>
+                    <button id="control_button_g" style={{"width": "22%"}} onClick={this.handleClick} formAction="/pump/topoffOn" >Fill On</button>
                     <div id="control_gap"><p></p></div>
-                    <button id="control_button_o" onClick={this.handleClick} formAction="/pump/topoffOff">Pause</button>
-                    <div id="control_gap"><p></p></div>
-                    <button id="control_button_o" onClick={this.handleClick} formAction="/pump/topoffDisable" >Disable(24h)</button>
+                    <button id="control_button_o" style={{"width": "22%"}} onClick={this.handleClick} formAction="/pump/topoffDisable" >Fill Off(24h)</button>
                 </div>
             </div>
         )
@@ -867,10 +858,220 @@ class PumpOverview extends React.Component {
                     Right {this.state.powerVals[1]}
                 </div>
                 <div id='score_item'  style={{"width": "25%", "backgroundColor": "#8A888B"}}>
-                    Left Head {this.state.headsOn[0]==1?"On":"Off"}
+                    Left Head {this.state.headsOn[0]}
                 </div>
                 <div id='score_item'  style={{"width": "24%", "backgroundColor": "#adabae"}}>
-                    Right Head {this.state.headsOn[1]==1?"On":"Off"}
+                    Right Head {this.state.headsOn[1]}
+                </div>
+            </div>
+        )
+    }
+}
+
+class SensorChart extends React.Component {
+
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            config : {
+                title: {
+                    title: {
+                        text: null
+                    },
+                },
+                chart: {
+                    height:'230',
+                },
+                legend: {
+                    enabled: false
+                },
+                yAxis: [{
+                    title: {text:null}
+                },{
+                    title: {text:null}
+                },{
+                    title: {text:null}
+                },{
+                    title: {text:null}
+                }],
+                time: {
+                    useUTC: false
+                },
+                series: [{
+                    name: "Loading...",
+                    data: [[0, 0]]
+                },{
+                    name: "Loading...",
+                    data: [[0, 0]]
+                },{
+                    name: "Loading...",
+                    data: [[0, 0]]
+                },{
+                    name: "Loading...",
+                    data: [[0, 0]]
+                }]
+
+            }
+        };
+        this.getSensorHistory = this.getSensorHistory.bind(this);
+    }
+
+    componentDidMount() {
+        this.getSensorHistory();
+        setInterval(this.getSensorHistory, 5*60*1000);
+    }
+
+
+    getSensorHistory() {
+        client({method: 'GET', path: '/history/series?filters=ph,salinity,orp,do'}).done(response => {
+            this.setState({
+                config : {
+                    plotOptions: {
+                        line: {
+                            marker: {
+                                enabled: false
+                            }
+                        }
+                    },
+                    credits: {
+                        enabled: false
+                    },
+                    chart: {
+                        type: 'line',
+                        height:'230',
+                        backgroundColor:'#17A598',
+                        plotBackgroundColor: '#FFFFFF'
+                    },
+                    title: {
+                        text: null
+                    },
+                    legend: {
+                        enabled: false
+                    },
+                    yAxis: [{
+                        title: {text:null},
+                        labels: {
+                            style: {
+                                color: '#111111',
+                                fontSize:'14px'
+                            }
+                        }
+
+                    },{
+                        title: {text:null},
+                        labels: {
+                            style: {
+                                color: '#F0806C',
+                                fontSize:'14px'
+                            }
+                        },
+                        opposite: true
+                    },{
+                        title: {text:null},
+                        labels: {
+                            style: {
+                                color: '#30608B',
+                                fontSize:'14px'
+                            }
+                        }
+
+                    },{
+                        title: {text:null},
+                        labels: {
+                            style: {
+                                color: '#DB381B',
+                                fontSize:'14px'
+                            }
+                        },
+                        opposite: true
+                    }],
+                    xAxis: {
+                        type: 'datetime',
+                        labels: {
+                            style: {
+                                color: '#FFFFFF',
+                                fontSize:'15px'
+                            }
+                        }
+                    },
+                    series: response.entity
+                }
+            });
+        });
+    }
+
+    render() {
+        var config = this.state.config;
+        // for (i = 0; i < 4 ; i++){
+        //     config.series[i].yAxis = i;
+        //     config.series[i].color = config.yAxis[i].labels.style.color;
+        // }
+        config.series[3].color = '#DB381B';
+        config.series[2].color = '#30608B';
+        config.series[1].color = '#F0806C';
+        config.series[0].color = '#111111';
+        config.series[3].yAxis = 3;
+        config.series[2].yAxis = 2;
+        config.series[1].yAxis = 1;
+        config.series[0].yAxis = 0;
+        var viewControlTag = [0, 0, 200, 1500].join(' ')
+        return (
+            <div id="chart_bar" >
+                <svg id="chart_tag" viewBox={viewControlTag}>
+                    <rect x={0} y={-100} rx={80} ry={80} width={400} height={1600} fill={"#17A598"}/>
+                    <text fontFamily={"Alegreya Sans"} fill={"#F0F0F1"} fontSize={140}
+                          transform={" rotate(-90 0,0) translate(-1060,150) "}>Sensors
+                    </text>
+                </svg>
+                <div id="chart" >
+                    <ReactHighcharts  config={config}></ReactHighcharts>
+                </div>
+            </div>
+        )
+    }
+}
+
+class SensorOverview extends React.Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {};
+        this.getSensorData = this.getSensorData.bind(this);
+    }
+
+    componentDidMount() {
+        this.getSensorData();
+        setInterval(this.getSensorData, 8000);
+    }
+
+    getSensorData() {
+        client({method: 'GET', path: '/environment/readings'}).done(response => {
+            this.setState({
+                ph: (response.entity.ph).toFixed(2),
+                orp: (response.entity.orp).toFixed(0),
+                salinity: (response.entity.salinity).toFixed(0),
+                do: (response.entity.dissolvedO).toFixed(2),
+            });
+        });
+    }
+
+
+    render() {
+
+        return (
+            <div id='score_bar'>
+                <div id='score_item'  style={{"width": "25%", "backgroundColor": "#30608B"}}>
+                    PH {this.state.ph}
+                </div>
+                <div id='score_item'  style={{"width": "25%", "backgroundColor": "#DB381B"}}>
+                    Salinity (sg) {this.state.salinity}
+                </div>
+                <div id='score_item'  style={{"width": "25%", "backgroundColor": "#F0806C"}}>
+                    ORP (mv) {this.state.orp}
+                </div>
+                <div id='score_item'  style={{"width": "24%", "backgroundColor": "#111111"}}>
+                    DO (mg/L) {this.state.do}
                 </div>
             </div>
         )
@@ -900,24 +1101,13 @@ class AdminActions extends React.Component {
                               transform={" rotate(-90 0,0) translate(-440,150) "}>Setup
                         </text>
                     </svg>
-                    <a id="control_button_g" href="/pump" >Sensors</a>
+                    <button id="control_button_r" style={{"width": "22%"}} onClick={this.handleClick} formAction="/reset" >Reset Hardware</button>
                     <div id="control_gap"><p></p></div>
-                    <a id="control_button_g" href="/pump">Logic</a>
+                    <a id="control_button_g" style={{"width": "22%"}} href="/pump" >Sensors</a>
                     <div id="control_gap"><p></p></div>
-                    <a id="control_button_g"  href="/details">Details</a>
-                </div>
-                <div id="control_bar">
-                    <svg id="control_tag" viewBox={viewControlTag}>
-                        <rect x={0} y={0} rx={80} ry={80} width={400} height={500} fill={"#D5D8C8"}/>
-                        <text fontFamily={"Alegreya Sans"} fill={"#17A598"} fontSize={140}
-                              transform={" rotate(-90 0,0) translate(-430,150) "}>Reset
-                        </text>
-                    </svg>
-                    <button id="control_button_r" onClick={this.handleClick} formAction="/reset" >Reset Hardware</button>
+                    <button id="control_button_r" style={{"width": "22%"}} onClick={this.handleClick} formAction="/reboot">Reset Server</button>
                     <div id="control_gap"><p></p></div>
-                    <button id="control_button_r" onClick={this.handleClick} formAction="/reboot">Reset Server</button>
-                    <div id="control_gap"><p></p></div>
-                    <button id="control_button_r" onClick={this.handleClick} formAction="/update" >Update Firmware</button>
+                    <button id="control_button_r" style={{"width": "22%"}} onClick={this.handleClick} formAction="/update" >Update Firmware</button>
                 </div>
             </div>
         )

@@ -1,5 +1,6 @@
 package me.davehummel.tredserver.fish;
 
+import me.davehummel.tredserver.fish.services.EnvSensorService;
 import me.davehummel.tredserver.fish.services.PumpLevelService;
 import me.davehummel.tredserver.fish.services.TempService;
 import me.davehummel.tredserver.gpio.TurbotGpio;
@@ -35,7 +36,7 @@ public class Application {
     }
 
     @Bean
-    public CommandLineRunner commandLineRunner(ServiceManager serialServiceManager, InitService initService, ReadService readService, PumpLevelService pumpLevelService, TempService tempService, HistoryService historyService) {
+    public CommandLineRunner commandLineRunner(ServiceManager serialServiceManager, InitService initService, ReadService readService, PumpLevelService pumpLevelService, TempService tempService, EnvSensorService envSensorService) {
         return args -> {
 
 
@@ -86,6 +87,8 @@ public class Application {
             serialServiceManager.addService(tempService);
 
             serialServiceManager.addService(pumpLevelService);
+
+            serialServiceManager.addService(envSensorService);
 
      //       serialServiceManager.addService(lightService);  // Light is now on a simple timer
 
