@@ -1,5 +1,7 @@
 package me.davehummel.tredserver.fish.history;
 
+import org.springframework.data.util.Pair;
+
 import javax.persistence.Entity;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,13 +10,13 @@ public class HistorySeries {
 
     String name;
 
-    List<Double[]> data;
+    List<Object[]> data;
 
     public HistorySeries(){
         data = new ArrayList<>();
     };
 
-    public HistorySeries(String name, List<Double[]> data) {
+    public HistorySeries(String name, List<Object[]> data) {
         this.name = name;
         this.data = data;
     }
@@ -27,11 +29,11 @@ public class HistorySeries {
         this.name = name;
     }
 
-    public List<Double[]> getData() {
+    public List<Object[]> getData() {
         return data;
     }
 
-    public void setData(List<Double[]> data) {
+    public void setData(List<Object[]> data) {
         this.data = data;
     }
 }

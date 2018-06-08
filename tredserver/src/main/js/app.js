@@ -10,12 +10,12 @@ import {IntlProvider} from 'react-intl';
 const ReactHighcharts = require('react-highcharts'); // Expects that Highcharts was loaded in the code.
 
 
-    ReactHighcharts.Highcharts.setOptions(
-        {
-            global: {
-                useUTC: false
-            }
-        });
+ReactHighcharts.Highcharts.setOptions(
+    {
+        global: {
+            useUTC: false
+        }
+    });
 
 
 function getLang() {
@@ -264,8 +264,6 @@ class OverviewApp extends React.Component {
                     <TemperatureChart/>
                     <WaterLevelOverview/>
                     <WaterLevelChart/>
-                    <PumpOverview/>
-                    <PumpChart/>
                     <SensorOverview/>
                     <SensorChart/>
                     <AdminActions/>
@@ -341,17 +339,26 @@ class CommonActions extends React.Component {
                               transform={" rotate(-90 0,0) translate(-440,150) "}>Pumps
                         </text>
                     </svg>
-                    <button id="control_button_g" style={{"width": "22%"}} onClick={this.handleClick} formAction="/pump/allOn" >Enabled</button>
+                    <button id="control_button_g" style={{"width": "22%"}} onClick={this.handleClick}
+                            formAction="/pump/allOn">Enabled
+                    </button>
                     <div id="control_gap"><p></p></div>
-                    <button id="control_button_o" style={{"width": "22%"}} onClick={this.handleClick} formAction="/pump/allOff">Pause (5m)</button>
+                    <button id="control_button_o" style={{"width": "22%"}} onClick={this.handleClick}
+                            formAction="/pump/allOff">Pause (5m)
+                    </button>
                     <div id="control_gap"><p></p></div>
-                    <button id="control_button_g" style={{"width": "22%"}} onClick={this.handleClick} formAction="/pump/topoffOn" >Fill On</button>
+                    <button id="control_button_g" style={{"width": "22%"}} onClick={this.handleClick}
+                            formAction="/pump/topoffOn">Fill On
+                    </button>
                     <div id="control_gap"><p></p></div>
-                    <button id="control_button_o" style={{"width": "22%"}} onClick={this.handleClick} formAction="/pump/topoffDisable" >Fill Off(24h)</button>
+                    <button id="control_button_o" style={{"width": "22%"}} onClick={this.handleClick}
+                            formAction="/pump/topoffDisable">Fill Off(24h)
+                    </button>
                 </div>
             </div>
         )
     }
+
     handleClick(e) {
         e.preventDefault();
         client({method: 'POST', path: e.target.formAction});
@@ -364,35 +371,38 @@ class TemperatureChart extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            config : {
+            config: {
                 title: {
                     title: {
                         text: null
                     },
                 },
                 chart: {
-                    height:'230',
+                    height: '230',
                 },
                 legend: {
                     enabled: false
                 },
                 yAxis: {
-                    title: {text:null}
+                    title: {text: null}
                 },
                 time: {
                     useUTC: false
                 },
-                    series: [{
+                series: [{
+                    name: "Loading...",
+                    data: [[0, 0]]
+                    },
+                    {
                         name: "Loading...",
                         data: [[0, 0]]
-                    },
-                        {
-                            name: "Loading...",
-                            data: [[0, 0]]
-                        },{
-                            name: "Loading...",
-                            data: [[0, 0]]
-                        }]
+                    }, {
+                        name: "Loading...",
+                        data: [[0, 0]]
+                    }, {
+                        name: "Loading...",
+                        data: [[0, 0]]
+                    }]
             }
         };
         this.getTempHistory = this.getTempHistory.bind(this);
@@ -400,14 +410,17 @@ class TemperatureChart extends React.Component {
 
     componentDidMount() {
         this.getTempHistory();
-        setInterval(this.getTempHistory, 5*60*1000);
+        setInterval(this.getTempHistory, 5 * 60 * 1000);
     }
 
 
     getTempHistory() {
-        client({method: 'GET', path: '/history/series?filters=toptemperature,bottomtemperature,outsidetemperature'}).done(response => {
+        client({
+            method: 'GET',
+            path: '/history/series?filters=toptemperature,bottomtemperature,outsidetemperature,envtemp'
+        }).done(response => {
             this.setState({
-                config : {
+                config: {
                     plotOptions: {
                         line: {
                             marker: {
@@ -419,8 +432,8 @@ class TemperatureChart extends React.Component {
                         enabled: false
                     },
                     chart: {
-                        height:'230',
-                        backgroundColor:'#17A598',
+                        height: '230',
+                        backgroundColor: '#17A598',
                         plotBackgroundColor: '#FFFFFF'
                     },
                     title: {
@@ -430,11 +443,11 @@ class TemperatureChart extends React.Component {
                         enabled: false
                     },
                     yAxis: {
-                        title: {text:null},
+                        title: {text: null},
                         labels: {
                             style: {
                                 color: '#FFFFFF',
-                                fontSize:'15px'
+                                fontSize: '15px'
                             }
                         }
                     },
@@ -443,7 +456,7 @@ class TemperatureChart extends React.Component {
                         labels: {
                             style: {
                                 color: '#FFFFFF',
-                                fontSize:'15px'
+                                fontSize: '15px'
                             }
                         }
                     },
@@ -458,17 +471,18 @@ class TemperatureChart extends React.Component {
         config.series[0].color = '#3F8782';
         config.series[1].color = '#8A888B';
         config.series[2].color = '#018BAF';
+        config.series[3].color = '#8A888B';
         var viewControlTag = [0, 0, 200, 1500].join(' ')
         return (
-            <div id="chart_bar" >
+            <div id="chart_bar">
                 <svg id="chart_tag" viewBox={viewControlTag}>
                     <rect x={0} y={-100} rx={80} ry={80} width={400} height={1600} fill={"#17A598"}/>
                     <text fontFamily={"Alegreya Sans"} fill={"#F0F0F1"} fontSize={140}
                           transform={" rotate(-90 0,0) translate(-1060,150) "}>Temperature
                     </text>
                 </svg>
-                <div id="chart" >
-                    <ReactHighcharts  config={config}></ReactHighcharts>
+                <div id="chart">
+                    <ReactHighcharts config={config}></ReactHighcharts>
                 </div>
             </div>
         )
@@ -502,13 +516,13 @@ class TemperatureOverview extends React.Component {
 
         return (
             <div id='score_bar'>
-                <div id='score_item'  style={{"width": "33%", "backgroundColor": "#018BAF"}}>
+                <div id='score_item' style={{"width": "33%", "backgroundColor": "#018BAF"}}>
                     Top {this.state.topTemp} °F
                 </div>
-                <div id='score_item'  style={{"width": "33%", "backgroundColor": "#3F8782"}}>
+                <div id='score_item' style={{"width": "33%", "backgroundColor": "#3F8782"}}>
                     Bottom {this.state.bottomTemp} °F
                 </div>
-                <div id='score_item'  style={{"width": "33%", "backgroundColor": "#F0806C"}}>
+                <div id='score_item' style={{"width": "33%", "backgroundColor": "#F0806C"}}>
                     Outside {this.state.outTemp} °F
                 </div>
             </div>
@@ -522,20 +536,20 @@ class WaterLevelChart extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            config : {
+            config: {
                 title: {
                     title: {
                         text: null
                     },
                 },
                 chart: {
-                    height:'230',
+                    height: '230',
                 },
                 legend: {
                     enabled: false
                 },
                 yAxis: {
-                    title: {text:null}
+                    title: {text: null}
                 },
                 time: {
                     useUTC: false
@@ -547,7 +561,7 @@ class WaterLevelChart extends React.Component {
                     {
                         name: "Loading...",
                         data: [[0, 0]]
-                    },{
+                    }, {
                         name: "Loading...",
                         data: [[0, 0]]
                     }]
@@ -559,14 +573,17 @@ class WaterLevelChart extends React.Component {
 
     componentDidMount() {
         this.getLevelHistory();
-        setInterval(this.getLevelHistory, 5*60*1000);
+        setInterval(this.getLevelHistory, 5 * 60 * 1000);
     }
 
 
     getLevelHistory() {
-        client({method: 'GET', path: '/history/series?filters=rightpumplevel,leftpumplevel,topoffcount'}).done(response => {
+        client({
+            method: 'GET',
+            path: '/history/series?filters=rightpumplevel,leftpumplevel,topoffcount'
+        }).done(response => {
             this.setState({
-                config : {
+                config: {
                     plotOptions: {
                         area: {
                             stacking: 'normal',
@@ -580,8 +597,8 @@ class WaterLevelChart extends React.Component {
                     },
                     chart: {
                         type: 'area',
-                        height:'230',
-                        backgroundColor:'#17A598',
+                        height: '230',
+                        backgroundColor: '#17A598',
                         plotBackgroundColor: '#FFFFFF'
                     },
                     title: {
@@ -591,12 +608,12 @@ class WaterLevelChart extends React.Component {
                         enabled: false
                     },
                     yAxis: {
-                        title: {text:null},
+                        title: {text: null},
                         max: 20,
                         labels: {
                             style: {
                                 color: '#FFFFFF',
-                                fontSize:'15px'
+                                fontSize: '15px'
                             }
                         }
                     },
@@ -605,7 +622,7 @@ class WaterLevelChart extends React.Component {
                         labels: {
                             style: {
                                 color: '#FFFFFF',
-                                fontSize:'15px'
+                                fontSize: '15px'
                             }
                         }
                     },
@@ -625,15 +642,15 @@ class WaterLevelChart extends React.Component {
         config.series[0].index = 2;
         var viewControlTag = [0, 0, 200, 1500].join(' ')
         return (
-            <div id="chart_bar" >
+            <div id="chart_bar">
                 <svg id="chart_tag" viewBox={viewControlTag}>
                     <rect x={0} y={-100} rx={80} ry={80} width={400} height={1600} fill={"#17A598"}/>
                     <text fontFamily={"Alegreya Sans"} fill={"#F0F0F1"} fontSize={140}
                           transform={" rotate(-90 0,0) translate(-1060,150) "}>Water Level
                     </text>
                 </svg>
-                <div id="chart" >
-                    <ReactHighcharts  config={config}></ReactHighcharts>
+                <div id="chart">
+                    <ReactHighcharts config={config}></ReactHighcharts>
                 </div>
             </div>
         )
@@ -649,7 +666,8 @@ class WaterLevelOverview extends React.Component {
             powerVals: [0, 0, 0],
             powerModVals: [0, 0],
             headsOn: [false, false],
-            headDates: [0, 0]};
+            headDates: [0, 0]
+        };
         this.getLevels = this.getLevels.bind(this);
     }
 
@@ -678,16 +696,16 @@ class WaterLevelOverview extends React.Component {
 
         return (
             <div id='score_bar'>
-                <div id='score_item'  style={{"width": "25%", "backgroundColor": "#018BAF"}}>
-                    Left {this.state.levelVals[0]}″
+                <div id='score_item' style={{"width": "25%", "backgroundColor": "#018BAF"}}>
+                    Left {this.state.levelVals[0].toFixed(2)}″ ({this.state.powerVals[0].toFixed(2)} head {this.state.headsOn[0]})
                 </div>
-                <div id='score_item'  style={{"width": "25%", "backgroundColor": "#3F8782"}}>
-                    Right {this.state.levelVals[1]}″
+                <div id='score_item' style={{"width": "25%", "backgroundColor": "#3F8782"}}>
+                    Right {this.state.levelVals[1].toFixed(2)}″ ({this.state.powerVals[1].toFixed(2)} head {this.state.headsOn[1]})
                 </div>
-                <div id='score_item'  style={{"width": "25%", "backgroundColor": "#8A888B"}}>
+                <div id='score_item' style={{"width": "25%", "backgroundColor": "#8A888B"}}>
                     Total {this.state.depth}″
                 </div>
-                <div id='score_item'  style={{"width": "24%", "backgroundColor": "#F0806C"}}>
+                <div id='score_item' style={{"width": "24%", "backgroundColor": "#F0806C"}}>
                     Topoff Count {this.state.topOffCount}
                 </div>
             </div>
@@ -695,178 +713,6 @@ class WaterLevelOverview extends React.Component {
     }
 }
 
-class PumpChart extends React.Component {
-
-
-    constructor(props) {
-        super(props);
-        this.state = {
-            config : {
-                title: {
-                    title: {
-                        text: null
-                    },
-                },
-                chart: {
-                    height:'230',
-                },
-                legend: {
-                    enabled: false
-                },
-                yAxis: {
-                    title: {text:null}
-                },
-                time: {
-                    useUTC: false
-                },
-                series: [{
-                    name: "Loading...",
-                    data: [[0, 0]]
-                },
-                    {
-                        name: "Loading...",
-                        data: [[0, 0]]
-                    }]
-
-            }
-        };
-        this.getPumpHistory = this.getPumpHistory.bind(this);
-    }
-
-    componentDidMount() {
-        this.getPumpHistory();
-        setInterval(this.getPumpHistory, 5*60*1000);
-    }
-
-
-    getPumpHistory() {
-        client({method: 'GET', path: '/history/series?filters=leftpumppower,rightpumppower'}).done(response => {
-            this.setState({
-                config : {
-                    plotOptions: {
-                        line: {
-                            marker: {
-                                enabled: false
-                            }
-                        }
-                    },
-                    credits: {
-                        enabled: false
-                    },
-                    chart: {
-                        type: 'line',
-                        height:'230',
-                        backgroundColor:'#17A598',
-                        plotBackgroundColor: '#FFFFFF'
-                    },
-                    title: {
-                        text: null
-                    },
-                    legend: {
-                        enabled: false
-                    },
-                    yAxis: {
-                        title: {text:null},
-                        max: 255,
-                        labels: {
-                            style: {
-                                color: '#FFFFFF',
-                                fontSize:'15px'
-                            }
-                        }
-
-                    },
-                    xAxis: {
-                        type: 'datetime',
-                        labels: {
-                            style: {
-                                color: '#FFFFFF',
-                                fontSize:'15px'
-                            }
-                        }
-                    },
-                    series: response.entity
-                }
-            });
-        });
-    }
-
-    render() {
-        var config = this.state.config;
-
-        config.series[1].color = '#3F8782';
-        config.series[0].color = '#018BAF';
-        var viewControlTag = [0, 0, 200, 1500].join(' ')
-        return (
-            <div id="chart_bar" >
-                <svg id="chart_tag" viewBox={viewControlTag}>
-                    <rect x={0} y={-100} rx={80} ry={80} width={400} height={1600} fill={"#17A598"}/>
-                    <text fontFamily={"Alegreya Sans"} fill={"#F0F0F1"} fontSize={140}
-                          transform={" rotate(-90 0,0) translate(-1060,150) "}>Pump Power
-                    </text>
-                </svg>
-                <div id="chart" >
-                    <ReactHighcharts  config={config}></ReactHighcharts>
-                </div>
-            </div>
-        )
-    }
-}
-
-class PumpOverview extends React.Component {
-
-    constructor(props) {
-        super(props);
-        this.state = {
-            levelVals: [0, 0, 0],
-            powerVals: [0, 0, 0],
-            powerModVals: [0, 0],
-            headsOn: [false, false],
-            headDates: [0, 0]};
-        this.getLevels = this.getLevels.bind(this);
-    }
-
-    componentDidMount() {
-        this.getLevels();
-        setInterval(this.getLevels, 5000);
-    }
-
-    getLevels() {
-        client({method: 'GET', path: '/pump/levels'}).done(response => {
-            this.setState({
-                levelVals: response.entity.levels,
-                powerVals: response.entity.powers,
-                powerModVals: response.entity.powerMods,
-                depth: response.entity.depth,
-                depthFiveMin: response.entity.depthFiveMin,
-                headsOn: response.entity.heads,
-                headDates: response.entity.headDates,
-                topOffCount: response.entity.topOffCount
-            });
-        });
-    }
-
-
-    render() {
-
-        return (
-            <div id='score_bar'>
-                <div id='score_item'  style={{"width": "25%", "backgroundColor": "#018BAF"}}>
-                    Left {this.state.powerVals[0]}
-                </div>
-                <div id='score_item'  style={{"width": "25%", "backgroundColor": "#3F8782"}}>
-                    Right {this.state.powerVals[1]}
-                </div>
-                <div id='score_item'  style={{"width": "25%", "backgroundColor": "#8A888B"}}>
-                    Left Head {this.state.headsOn[0]}
-                </div>
-                <div id='score_item'  style={{"width": "24%", "backgroundColor": "#adabae"}}>
-                    Right Head {this.state.headsOn[1]}
-                </div>
-            </div>
-        )
-    }
-}
 
 class SensorChart extends React.Component {
 
@@ -874,26 +720,26 @@ class SensorChart extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            config : {
+            config: {
                 title: {
                     title: {
                         text: null
                     },
                 },
                 chart: {
-                    height:'230',
+                    height: '230',
                 },
                 legend: {
                     enabled: false
                 },
                 yAxis: [{
-                    title: {text:null}
-                },{
-                    title: {text:null}
-                },{
-                    title: {text:null}
-                },{
-                    title: {text:null}
+                    title: {text: null}
+                }, {
+                    title: {text: null}
+                }, {
+                    title: {text: null}
+                }, {
+                    title: {text: null}
                 }],
                 time: {
                     useUTC: false
@@ -901,13 +747,13 @@ class SensorChart extends React.Component {
                 series: [{
                     name: "Loading...",
                     data: [[0, 0]]
-                },{
+                }, {
                     name: "Loading...",
                     data: [[0, 0]]
-                },{
+                }, {
                     name: "Loading...",
                     data: [[0, 0]]
-                },{
+                }, {
                     name: "Loading...",
                     data: [[0, 0]]
                 }]
@@ -919,14 +765,14 @@ class SensorChart extends React.Component {
 
     componentDidMount() {
         this.getSensorHistory();
-        setInterval(this.getSensorHistory, 5*60*1000);
+        setInterval(this.getSensorHistory, 5 * 60 * 1000);
     }
 
 
     getSensorHistory() {
         client({method: 'GET', path: '/history/series?filters=ph,salinity,orp,do'}).done(response => {
             this.setState({
-                config : {
+                config: {
                     plotOptions: {
                         line: {
                             marker: {
@@ -939,8 +785,8 @@ class SensorChart extends React.Component {
                     },
                     chart: {
                         type: 'line',
-                        height:'230',
-                        backgroundColor:'#17A598',
+                        height: '230',
+                        backgroundColor: '#17A598',
                         plotBackgroundColor: '#FFFFFF'
                     },
                     title: {
@@ -950,38 +796,38 @@ class SensorChart extends React.Component {
                         enabled: false
                     },
                     yAxis: [{
-                        title: {text:null},
+                        title: {text: null},
                         labels: {
                             style: {
                                 color: '#111111',
-                                fontSize:'14px'
+                                fontSize: '14px'
                             }
                         }
 
-                    },{
-                        title: {text:null},
+                    }, {
+                        title: {text: null},
                         labels: {
                             style: {
                                 color: '#F0806C',
-                                fontSize:'14px'
+                                fontSize: '14px'
                             }
                         },
                         opposite: true
-                    },{
-                        title: {text:null},
+                    }, {
+                        title: {text: null},
                         labels: {
                             style: {
                                 color: '#30608B',
-                                fontSize:'14px'
+                                fontSize: '14px'
                             }
                         }
 
-                    },{
-                        title: {text:null},
+                    }, {
+                        title: {text: null},
                         labels: {
                             style: {
                                 color: '#DB381B',
-                                fontSize:'14px'
+                                fontSize: '14px'
                             }
                         },
                         opposite: true
@@ -991,7 +837,7 @@ class SensorChart extends React.Component {
                         labels: {
                             style: {
                                 color: '#FFFFFF',
-                                fontSize:'15px'
+                                fontSize: '15px'
                             }
                         }
                     },
@@ -1017,15 +863,15 @@ class SensorChart extends React.Component {
         config.series[0].yAxis = 0;
         var viewControlTag = [0, 0, 200, 1500].join(' ')
         return (
-            <div id="chart_bar" >
+            <div id="chart_bar">
                 <svg id="chart_tag" viewBox={viewControlTag}>
                     <rect x={0} y={-100} rx={80} ry={80} width={400} height={1600} fill={"#17A598"}/>
                     <text fontFamily={"Alegreya Sans"} fill={"#F0F0F1"} fontSize={140}
                           transform={" rotate(-90 0,0) translate(-1060,150) "}>Sensors
                     </text>
                 </svg>
-                <div id="chart" >
-                    <ReactHighcharts  config={config}></ReactHighcharts>
+                <div id="chart">
+                    <ReactHighcharts config={config}></ReactHighcharts>
                 </div>
             </div>
         )
@@ -1061,16 +907,16 @@ class SensorOverview extends React.Component {
 
         return (
             <div id='score_bar'>
-                <div id='score_item'  style={{"width": "25%", "backgroundColor": "#30608B"}}>
+                <div id='score_item' style={{"width": "25%", "backgroundColor": "#30608B"}}>
                     PH {this.state.ph}
                 </div>
-                <div id='score_item'  style={{"width": "25%", "backgroundColor": "#DB381B"}}>
+                <div id='score_item' style={{"width": "25%", "backgroundColor": "#DB381B"}}>
                     Salinity (sg) {this.state.salinity}
                 </div>
-                <div id='score_item'  style={{"width": "25%", "backgroundColor": "#F0806C"}}>
+                <div id='score_item' style={{"width": "25%", "backgroundColor": "#F0806C"}}>
                     ORP (mv) {this.state.orp}
                 </div>
-                <div id='score_item'  style={{"width": "24%", "backgroundColor": "#111111"}}>
+                <div id='score_item' style={{"width": "24%", "backgroundColor": "#111111"}}>
                     DO (mg/L) {this.state.do}
                 </div>
             </div>
@@ -1101,13 +947,19 @@ class AdminActions extends React.Component {
                               transform={" rotate(-90 0,0) translate(-440,150) "}>Setup
                         </text>
                     </svg>
-                    <button id="control_button_r" style={{"width": "22%"}} onClick={this.handleClick} formAction="/reset" >Reset Hardware</button>
+                    <button id="control_button_r" style={{"width": "22%"}} onClick={this.handleClick}
+                            formAction="/reset">Reset Hardware
+                    </button>
                     <div id="control_gap"><p></p></div>
-                    <a id="control_button_g" style={{"width": "22%"}} href="/pump" >Sensors</a>
+                    <a id="control_button_g" style={{"width": "22%"}} href="/pump">Sensors</a>
                     <div id="control_gap"><p></p></div>
-                    <button id="control_button_r" style={{"width": "22%"}} onClick={this.handleClick} formAction="/reboot">Reset Server</button>
+                    <button id="control_button_r" style={{"width": "22%"}} onClick={this.handleClick}
+                            formAction="/reboot">Reset Server
+                    </button>
                     <div id="control_gap"><p></p></div>
-                    <button id="control_button_r" style={{"width": "22%"}} onClick={this.handleClick} formAction="/update" >Update Firmware</button>
+                    <button id="control_button_r" style={{"width": "22%"}} onClick={this.handleClick}
+                            formAction="/update">Update Firmware
+                    </button>
                 </div>
             </div>
         )
@@ -1120,7 +972,6 @@ class AdminActions extends React.Component {
 
 
 }
-
 
 
 function ElementChooser(props) {

@@ -14,7 +14,7 @@ import java.util.Date;
 
 public class PumpLevels extends ResourceSupport {
 
-    public PumpLevels(float levels[], float powers[], float powerMods[], float depth, float depthFiveMin, int topOffCount, String heads[], Date headDates[], int[] connectionLoss) {
+    public PumpLevels(float levels[], float powers[], float powerMods[], float depth, float depthFiveMin, int topOffCount,Date topOffDisabledUntil, String heads[], Date headDates[], int[] connectionLoss) {
         this.levels = levels;
         this.powers = powers;
         this.powerMods = powerMods;
@@ -23,6 +23,7 @@ public class PumpLevels extends ResourceSupport {
         this.heads = heads;
         this.headDates = headDates;
         this.topOffCount = topOffCount;
+        this.topOffDisabledUntil = topOffDisabledUntil;
         this.connectionLoss = connectionLoss;
     }
 
@@ -40,6 +41,7 @@ public class PumpLevels extends ResourceSupport {
 
 
     private int[] connectionLoss;
+    private Date topOffDisabledUntil;
 
     @Override
     public String toString() {

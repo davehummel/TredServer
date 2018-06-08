@@ -73,6 +73,8 @@ public class HistoryController {
 
         List<HistoryEvent> result = historyService.getResult(from, to);
 
+        result.sort((o1, o2) -> o1.getId().getDate().compareTo(o2.getId().getDate()));
+
         Map<String, HistorySeries> seriesSet = new TreeMap<>();
 
         for (HistoryEvent event : result) {
@@ -88,9 +90,9 @@ public class HistoryController {
                 seriesSet.put(series.getName(), series);
             }
 
-            Double[] item = new Double[]{Double.valueOf(event.getId().getDate().getTime()), event.value};
+            Object[] item = new Object[]{event.getId().getDate().getTime(), event.value};
 
-            if (item[0].equals (Double.NaN)) continue;
+
             if (item[1].equals(Double.NaN)) continue;
 
             series.getData().add(item);

@@ -33,18 +33,19 @@ public class EnvSensorService extends CommandService {
     private final List<CommandListener> listeners = new ArrayList<>();
 
     private final ScheduledInstruction levelRead = new ScheduledInstruction(
-            'R', ENVINSTRUCTIONID, 1000, 10000, 0, new ReadBody(DataType.FLOAT, new String[]{"DAA", "DBB", "DCC" , "DDD"}, 1, 0));
+            'R', ENVINSTRUCTIONID, 1000, 10000, 0, new ReadBody(DataType.FLOAT, new String[]{"DAA", "DBB", "DCC" , "DDD", "DEE", "DFF" , "DGG", "DHH","DII"}, 1, 0));
 
 
     private final ScheduledInstruction connectionQualityRead = new ScheduledInstruction(
             'R', ENVPINGID, 1000, 5000, 0, new ReadBody(DataType.BYTE, new String[]{"DDD"}, 1, 0));
 
 
-    private double ph, orp, salinity, disolvedO;
+    private double ph, orp, salinity, disolvedO, co2, tvoc, pressure,humidity,temperature;
 
     int radioLoss = 0;
 
     private DescriptiveStatistics phTenMinutes = new DescriptiveStatistics(60), orpTenMinutes = new DescriptiveStatistics(60), salinityTenMinutes = new DescriptiveStatistics(60), disolvedOTenMinutes = new DescriptiveStatistics(60);
+    private DescriptiveStatistics co2TenMinutes = new DescriptiveStatistics(60), tvocTenMinutes = new DescriptiveStatistics(60), pressureTenMinutes = new DescriptiveStatistics(60), humidityTenMinutes = new DescriptiveStatistics(60), tempTenMinutes = new DescriptiveStatistics(60);
 
     @Autowired
     private AlertService alertService;
@@ -69,7 +70,6 @@ public class EnvSensorService extends CommandService {
             @Override
             protected void processData(StandardLine line) {
                 double temp = SerialConversionUtil.getFloat(line.raw, 5);
-                System.out.println("got "+ temp + "from "+line.raw);
                 ph = temp;
                 phTenMinutes.addValue(ph);
 
@@ -84,6 +84,26 @@ public class EnvSensorService extends CommandService {
                 temp = SerialConversionUtil.getFloat(line.raw, 17);
                 disolvedO = temp;
                 disolvedOTenMinutes.addValue(disolvedO);
+
+                temp = SerialConversionUtil.getFloat(line.raw, 21);
+                co2 = temp;
+                co2TenMinutes.addValue(co2);
+
+                temp = SerialConversionUtil.getFloat(line.raw, 25);
+                tvoc = temp;
+                tvocTenMinutes.addValue(tvoc);
+
+                temp = SerialConversionUtil.getFloat(line.raw, 29);
+                pressure = temp;
+                pressureTenMinutes.addValue(pressure);
+
+                temp = SerialConversionUtil.getFloat(line.raw, 33);
+                humidity = temp;
+                humidityTenMinutes.addValue(humidity);
+
+                temp = SerialConversionUtil.getFloat(line.raw, 37);
+                temperature = temp;
+                tempTenMinutes.addValue(temperature);
             }
         });
         listeners.add(new CommandListener() {
@@ -176,6 +196,66 @@ public class EnvSensorService extends CommandService {
             }
         });
 
+        historyService.addSupplier("CO2", new ResettingSupplier() {
+            @Override
+            public void resetState() {
+
+            }
+
+            @Override
+            public Double get() {
+                return co2TenMinutes.getMean();
+            }
+        });
+
+        historyService.addSupplier("TVOC", new ResettingSupplier() {
+            @Override
+            public void resetState() {
+
+            }
+
+            @Override
+            public Double get() {
+                return tvocTenMinutes.getMean();
+            }
+        });
+
+        historyService.addSupplier("Pressure", new ResettingSupplier() {
+            @Override
+            public void resetState() {
+
+            }
+
+            @Override
+            public Double get() {
+                return pressureTenMinutes.getMean();
+            }
+        });
+
+        historyService.addSupplier("Humidity", new ResettingSupplier() {
+            @Override
+            public void resetState() {
+
+            }
+
+            @Override
+            public Double get() {
+                return humidityTenMinutes.getMean();
+            }
+        });
+
+        historyService.addSupplier("EnvTemp", new ResettingSupplier() {
+            @Override
+            public void resetState() {
+
+            }
+
+            @Override
+            public Double get() {
+                return tempTenMinutes.getMean();
+            }
+        });
+
         Alert alert = new Alert() {
 
             private AlertStatus status = AlertStatus.Safe;
@@ -206,9 +286,9 @@ public class EnvSensorService extends CommandService {
             public AlertStatus getStatus() {
                 status = AlertStatus.Safe;
 
-                if (ph > 8.5) {
+                if (ph > 8.4) {
                     status = AlertStatus.Alerting;
-                } else if (ph < 7.6) {
+                } else if (ph < 7.7) {
                     status = AlertStatus.Alerting;
                 }
 
@@ -232,13 +312,13 @@ public class EnvSensorService extends CommandService {
                     @Override
                     public void alert(Alert parent) {
                         System.out.println("PH Alert:" + getStatusDetails());
-                      //  smsSender.sendSMS("PH Alert:" + getStatusDetails());
+                        smsSender.sendSMS("PH Alert:" + getStatusDetails());
                     }
 
                     @Override
                     public void endAlert(Alert parent) {
                         System.out.println("PH OK:" + getStatusDetails());
-                      //  smsSender.sendSMS("PH OK:" + getStatusDetails());
+                        smsSender.sendSMS("PH OK:" + getStatusDetails());
                     }
 
                     @Override
@@ -263,7 +343,7 @@ public class EnvSensorService extends CommandService {
     }
 
     public EnvironmentReadings getReadings() {
-        EnvironmentReadings readings = new EnvironmentReadings(ph,orp,salinity,disolvedO, radioLoss);
+        EnvironmentReadings readings = new EnvironmentReadings(ph,orp,salinity,disolvedO,co2,tvoc,pressure,humidity,temperature, radioLoss);
         return readings;
     }
 }

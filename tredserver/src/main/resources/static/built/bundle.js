@@ -454,8 +454,6 @@
 	                    React.createElement(TemperatureChart, null),
 	                    React.createElement(WaterLevelOverview, null),
 	                    React.createElement(WaterLevelChart, null),
-	                    React.createElement(PumpOverview, null),
-	                    React.createElement(PumpChart, null),
 	                    React.createElement(SensorOverview, null),
 	                    React.createElement(SensorChart, null),
 	                    React.createElement(AdminActions, null)
@@ -589,7 +587,8 @@
 	                    ),
 	                    React.createElement(
 	                        'button',
-	                        { id: 'control_button_g', style: { "width": "22%" }, onClick: this.handleClick, formAction: '/pump/allOn' },
+	                        { id: 'control_button_g', style: { "width": "22%" }, onClick: this.handleClick,
+	                            formAction: '/pump/allOn' },
 	                        'Enabled'
 	                    ),
 	                    React.createElement(
@@ -599,7 +598,8 @@
 	                    ),
 	                    React.createElement(
 	                        'button',
-	                        { id: 'control_button_o', style: { "width": "22%" }, onClick: this.handleClick, formAction: '/pump/allOff' },
+	                        { id: 'control_button_o', style: { "width": "22%" }, onClick: this.handleClick,
+	                            formAction: '/pump/allOff' },
 	                        'Pause (5m)'
 	                    ),
 	                    React.createElement(
@@ -609,7 +609,8 @@
 	                    ),
 	                    React.createElement(
 	                        'button',
-	                        { id: 'control_button_g', style: { "width": "22%" }, onClick: this.handleClick, formAction: '/pump/topoffOn' },
+	                        { id: 'control_button_g', style: { "width": "22%" }, onClick: this.handleClick,
+	                            formAction: '/pump/topoffOn' },
 	                        'Fill On'
 	                    ),
 	                    React.createElement(
@@ -619,7 +620,8 @@
 	                    ),
 	                    React.createElement(
 	                        'button',
-	                        { id: 'control_button_o', style: { "width": "22%" }, onClick: this.handleClick, formAction: '/pump/topoffDisable' },
+	                        { id: 'control_button_o', style: { "width": "22%" }, onClick: this.handleClick,
+	                            formAction: '/pump/topoffDisable' },
 	                        'Fill Off(24h)'
 	                    )
 	                )
@@ -672,6 +674,9 @@
 	                }, {
 	                    name: "Loading...",
 	                    data: [[0, 0]]
+	                }, {
+	                    name: "Loading...",
+	                    data: [[0, 0]]
 	                }]
 	            }
 	        };
@@ -690,7 +695,10 @@
 	        value: function getTempHistory() {
 	            var _this14 = this;
 	
-	            client({ method: 'GET', path: '/history/series?filters=toptemperature,bottomtemperature,outsidetemperature' }).done(function (response) {
+	            client({
+	                method: 'GET',
+	                path: '/history/series?filters=toptemperature,bottomtemperature,outsidetemperature,envtemp'
+	            }).done(function (response) {
 	                _this14.setState({
 	                    config: {
 	                        plotOptions: {
@@ -744,6 +752,7 @@
 	            config.series[0].color = '#3F8782';
 	            config.series[1].color = '#8A888B';
 	            config.series[2].color = '#018BAF';
+	            config.series[3].color = '#8A888B';
 	            var viewControlTag = [0, 0, 200, 1500].join(' ');
 	            return React.createElement(
 	                'div',
@@ -893,7 +902,10 @@
 	        value: function getLevelHistory() {
 	            var _this18 = this;
 	
-	            client({ method: 'GET', path: '/history/series?filters=rightpumplevel,leftpumplevel,topoffcount' }).done(function (response) {
+	            client({
+	                method: 'GET',
+	                path: '/history/series?filters=rightpumplevel,leftpumplevel,topoffcount'
+	            }).done(function (response) {
 	                _this18.setState({
 	                    config: {
 	                        plotOptions: {
@@ -993,7 +1005,8 @@
 	            powerVals: [0, 0, 0],
 	            powerModVals: [0, 0],
 	            headsOn: [false, false],
-	            headDates: [0, 0] };
+	            headDates: [0, 0]
+	        };
 	        _this19.getLevels = _this19.getLevels.bind(_this19);
 	        return _this19;
 	    }
@@ -1033,15 +1046,23 @@
 	                    'div',
 	                    { id: 'score_item', style: { "width": "25%", "backgroundColor": "#018BAF" } },
 	                    'Left ',
-	                    this.state.levelVals[0],
-	                    '\u2033'
+	                    this.state.levelVals[0].toFixed(2),
+	                    '\u2033 (',
+	                    this.state.powerVals[0].toFixed(2),
+	                    ' head ',
+	                    this.state.headsOn[0],
+	                    ')'
 	                ),
 	                React.createElement(
 	                    'div',
 	                    { id: 'score_item', style: { "width": "25%", "backgroundColor": "#3F8782" } },
 	                    'Right ',
-	                    this.state.levelVals[1],
-	                    '\u2033'
+	                    this.state.levelVals[1].toFixed(2),
+	                    '\u2033 (',
+	                    this.state.powerVals[1].toFixed(2),
+	                    ' head ',
+	                    this.state.headsOn[1],
+	                    ')'
 	                ),
 	                React.createElement(
 	                    'div',
@@ -1063,231 +1084,15 @@
 	    return WaterLevelOverview;
 	}(React.Component);
 	
-	var PumpChart = function (_React$Component13) {
-	    _inherits(PumpChart, _React$Component13);
-	
-	    function PumpChart(props) {
-	        _classCallCheck(this, PumpChart);
-	
-	        var _this21 = _possibleConstructorReturn(this, (PumpChart.__proto__ || Object.getPrototypeOf(PumpChart)).call(this, props));
-	
-	        _this21.state = {
-	            config: {
-	                title: {
-	                    title: {
-	                        text: null
-	                    }
-	                },
-	                chart: {
-	                    height: '230'
-	                },
-	                legend: {
-	                    enabled: false
-	                },
-	                yAxis: {
-	                    title: { text: null }
-	                },
-	                time: {
-	                    useUTC: false
-	                },
-	                series: [{
-	                    name: "Loading...",
-	                    data: [[0, 0]]
-	                }, {
-	                    name: "Loading...",
-	                    data: [[0, 0]]
-	                }]
-	
-	            }
-	        };
-	        _this21.getPumpHistory = _this21.getPumpHistory.bind(_this21);
-	        return _this21;
-	    }
-	
-	    _createClass(PumpChart, [{
-	        key: 'componentDidMount',
-	        value: function componentDidMount() {
-	            this.getPumpHistory();
-	            setInterval(this.getPumpHistory, 5 * 60 * 1000);
-	        }
-	    }, {
-	        key: 'getPumpHistory',
-	        value: function getPumpHistory() {
-	            var _this22 = this;
-	
-	            client({ method: 'GET', path: '/history/series?filters=leftpumppower,rightpumppower' }).done(function (response) {
-	                _this22.setState({
-	                    config: {
-	                        plotOptions: {
-	                            line: {
-	                                marker: {
-	                                    enabled: false
-	                                }
-	                            }
-	                        },
-	                        credits: {
-	                            enabled: false
-	                        },
-	                        chart: {
-	                            type: 'line',
-	                            height: '230',
-	                            backgroundColor: '#17A598',
-	                            plotBackgroundColor: '#FFFFFF'
-	                        },
-	                        title: {
-	                            text: null
-	                        },
-	                        legend: {
-	                            enabled: false
-	                        },
-	                        yAxis: {
-	                            title: { text: null },
-	                            max: 255,
-	                            labels: {
-	                                style: {
-	                                    color: '#FFFFFF',
-	                                    fontSize: '15px'
-	                                }
-	                            }
-	
-	                        },
-	                        xAxis: {
-	                            type: 'datetime',
-	                            labels: {
-	                                style: {
-	                                    color: '#FFFFFF',
-	                                    fontSize: '15px'
-	                                }
-	                            }
-	                        },
-	                        series: response.entity
-	                    }
-	                });
-	            });
-	        }
-	    }, {
-	        key: 'render',
-	        value: function render() {
-	            var config = this.state.config;
-	
-	            config.series[1].color = '#3F8782';
-	            config.series[0].color = '#018BAF';
-	            var viewControlTag = [0, 0, 200, 1500].join(' ');
-	            return React.createElement(
-	                'div',
-	                { id: 'chart_bar' },
-	                React.createElement(
-	                    'svg',
-	                    { id: 'chart_tag', viewBox: viewControlTag },
-	                    React.createElement('rect', { x: 0, y: -100, rx: 80, ry: 80, width: 400, height: 1600, fill: "#17A598" }),
-	                    React.createElement(
-	                        'text',
-	                        { fontFamily: "Alegreya Sans", fill: "#F0F0F1", fontSize: 140,
-	                            transform: " rotate(-90 0,0) translate(-1060,150) " },
-	                        'Pump Power'
-	                    )
-	                ),
-	                React.createElement(
-	                    'div',
-	                    { id: 'chart' },
-	                    React.createElement(ReactHighcharts, { config: config })
-	                )
-	            );
-	        }
-	    }]);
-	
-	    return PumpChart;
-	}(React.Component);
-	
-	var PumpOverview = function (_React$Component14) {
-	    _inherits(PumpOverview, _React$Component14);
-	
-	    function PumpOverview(props) {
-	        _classCallCheck(this, PumpOverview);
-	
-	        var _this23 = _possibleConstructorReturn(this, (PumpOverview.__proto__ || Object.getPrototypeOf(PumpOverview)).call(this, props));
-	
-	        _this23.state = {
-	            levelVals: [0, 0, 0],
-	            powerVals: [0, 0, 0],
-	            powerModVals: [0, 0],
-	            headsOn: [false, false],
-	            headDates: [0, 0] };
-	        _this23.getLevels = _this23.getLevels.bind(_this23);
-	        return _this23;
-	    }
-	
-	    _createClass(PumpOverview, [{
-	        key: 'componentDidMount',
-	        value: function componentDidMount() {
-	            this.getLevels();
-	            setInterval(this.getLevels, 5000);
-	        }
-	    }, {
-	        key: 'getLevels',
-	        value: function getLevels() {
-	            var _this24 = this;
-	
-	            client({ method: 'GET', path: '/pump/levels' }).done(function (response) {
-	                _this24.setState({
-	                    levelVals: response.entity.levels,
-	                    powerVals: response.entity.powers,
-	                    powerModVals: response.entity.powerMods,
-	                    depth: response.entity.depth,
-	                    depthFiveMin: response.entity.depthFiveMin,
-	                    headsOn: response.entity.heads,
-	                    headDates: response.entity.headDates,
-	                    topOffCount: response.entity.topOffCount
-	                });
-	            });
-	        }
-	    }, {
-	        key: 'render',
-	        value: function render() {
-	
-	            return React.createElement(
-	                'div',
-	                { id: 'score_bar' },
-	                React.createElement(
-	                    'div',
-	                    { id: 'score_item', style: { "width": "25%", "backgroundColor": "#018BAF" } },
-	                    'Left ',
-	                    this.state.powerVals[0]
-	                ),
-	                React.createElement(
-	                    'div',
-	                    { id: 'score_item', style: { "width": "25%", "backgroundColor": "#3F8782" } },
-	                    'Right ',
-	                    this.state.powerVals[1]
-	                ),
-	                React.createElement(
-	                    'div',
-	                    { id: 'score_item', style: { "width": "25%", "backgroundColor": "#8A888B" } },
-	                    'Left Head ',
-	                    this.state.headsOn[0]
-	                ),
-	                React.createElement(
-	                    'div',
-	                    { id: 'score_item', style: { "width": "24%", "backgroundColor": "#adabae" } },
-	                    'Right Head ',
-	                    this.state.headsOn[1]
-	                )
-	            );
-	        }
-	    }]);
-	
-	    return PumpOverview;
-	}(React.Component);
-	
-	var SensorChart = function (_React$Component15) {
-	    _inherits(SensorChart, _React$Component15);
+	var SensorChart = function (_React$Component13) {
+	    _inherits(SensorChart, _React$Component13);
 	
 	    function SensorChart(props) {
 	        _classCallCheck(this, SensorChart);
 	
-	        var _this25 = _possibleConstructorReturn(this, (SensorChart.__proto__ || Object.getPrototypeOf(SensorChart)).call(this, props));
+	        var _this21 = _possibleConstructorReturn(this, (SensorChart.__proto__ || Object.getPrototypeOf(SensorChart)).call(this, props));
 	
-	        _this25.state = {
+	        _this21.state = {
 	            config: {
 	                title: {
 	                    title: {
@@ -1328,8 +1133,8 @@
 	
 	            }
 	        };
-	        _this25.getSensorHistory = _this25.getSensorHistory.bind(_this25);
-	        return _this25;
+	        _this21.getSensorHistory = _this21.getSensorHistory.bind(_this21);
+	        return _this21;
 	    }
 	
 	    _createClass(SensorChart, [{
@@ -1341,10 +1146,10 @@
 	    }, {
 	        key: 'getSensorHistory',
 	        value: function getSensorHistory() {
-	            var _this26 = this;
+	            var _this22 = this;
 	
 	            client({ method: 'GET', path: '/history/series?filters=ph,salinity,orp,do' }).done(function (response) {
-	                _this26.setState({
+	                _this22.setState({
 	                    config: {
 	                        plotOptions: {
 	                            line: {
@@ -1462,17 +1267,17 @@
 	    return SensorChart;
 	}(React.Component);
 	
-	var SensorOverview = function (_React$Component16) {
-	    _inherits(SensorOverview, _React$Component16);
+	var SensorOverview = function (_React$Component14) {
+	    _inherits(SensorOverview, _React$Component14);
 	
 	    function SensorOverview(props) {
 	        _classCallCheck(this, SensorOverview);
 	
-	        var _this27 = _possibleConstructorReturn(this, (SensorOverview.__proto__ || Object.getPrototypeOf(SensorOverview)).call(this, props));
+	        var _this23 = _possibleConstructorReturn(this, (SensorOverview.__proto__ || Object.getPrototypeOf(SensorOverview)).call(this, props));
 	
-	        _this27.state = {};
-	        _this27.getSensorData = _this27.getSensorData.bind(_this27);
-	        return _this27;
+	        _this23.state = {};
+	        _this23.getSensorData = _this23.getSensorData.bind(_this23);
+	        return _this23;
 	    }
 	
 	    _createClass(SensorOverview, [{
@@ -1484,10 +1289,10 @@
 	    }, {
 	        key: 'getSensorData',
 	        value: function getSensorData() {
-	            var _this28 = this;
+	            var _this24 = this;
 	
 	            client({ method: 'GET', path: '/environment/readings' }).done(function (response) {
-	                _this28.setState({
+	                _this24.setState({
 	                    ph: response.entity.ph.toFixed(2),
 	                    orp: response.entity.orp.toFixed(0),
 	                    salinity: response.entity.salinity.toFixed(0),
@@ -1533,16 +1338,16 @@
 	    return SensorOverview;
 	}(React.Component);
 	
-	var AdminActions = function (_React$Component17) {
-	    _inherits(AdminActions, _React$Component17);
+	var AdminActions = function (_React$Component15) {
+	    _inherits(AdminActions, _React$Component15);
 	
 	    function AdminActions(props) {
 	        _classCallCheck(this, AdminActions);
 	
-	        var _this29 = _possibleConstructorReturn(this, (AdminActions.__proto__ || Object.getPrototypeOf(AdminActions)).call(this, props));
+	        var _this25 = _possibleConstructorReturn(this, (AdminActions.__proto__ || Object.getPrototypeOf(AdminActions)).call(this, props));
 	
-	        _this29.state = {};
-	        return _this29;
+	        _this25.state = {};
+	        return _this25;
 	    }
 	
 	    _createClass(AdminActions, [{
@@ -1571,7 +1376,8 @@
 	                    ),
 	                    React.createElement(
 	                        'button',
-	                        { id: 'control_button_r', style: { "width": "22%" }, onClick: this.handleClick, formAction: '/reset' },
+	                        { id: 'control_button_r', style: { "width": "22%" }, onClick: this.handleClick,
+	                            formAction: '/reset' },
 	                        'Reset Hardware'
 	                    ),
 	                    React.createElement(
@@ -1591,7 +1397,8 @@
 	                    ),
 	                    React.createElement(
 	                        'button',
-	                        { id: 'control_button_r', style: { "width": "22%" }, onClick: this.handleClick, formAction: '/reboot' },
+	                        { id: 'control_button_r', style: { "width": "22%" }, onClick: this.handleClick,
+	                            formAction: '/reboot' },
 	                        'Reset Server'
 	                    ),
 	                    React.createElement(
@@ -1601,7 +1408,8 @@
 	                    ),
 	                    React.createElement(
 	                        'button',
-	                        { id: 'control_button_r', style: { "width": "22%" }, onClick: this.handleClick, formAction: '/update' },
+	                        { id: 'control_button_r', style: { "width": "22%" }, onClick: this.handleClick,
+	                            formAction: '/update' },
 	                        'Update Firmware'
 	                    )
 	                )

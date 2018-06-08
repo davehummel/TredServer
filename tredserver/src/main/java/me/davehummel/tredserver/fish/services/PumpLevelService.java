@@ -36,21 +36,17 @@ import java.util.concurrent.TimeUnit;
 @Controller
 public class PumpLevelService extends CommandService {
 
-    private static final int PUMPPOWERPINGID = 17246;
-
-    private static final int PUMPLEVELPINGID = 17248;
-    private static final int POWERHEADPINGID = 17249;
     public static final int PUMPINSTRUCTIONID = 17250;
     public static final int CONNECTIONPINGID = 17251;
-
+    public static final String RUNTINST = "run";
+    private static final int PUMPPOWERPINGID = 17246;
+    private static final int PUMPLEVELPINGID = 17248;
+    private static final int POWERHEADPINGID = 17249;
     private static final String OFFINST = "off";
     private static final String LEVELSINST = "levels";
     private static final String DECIDEINST = "gyres";
     private static final String PUMPSETINST = "pumps";
     private static final String HEADINST = "heads";
-    public static final String RUNTINST = "run";
-
-
     private final List<CommandListener> listeners = new ArrayList<>();
 
     private final ScheduledInstruction levelRead = new ScheduledInstruction(
@@ -76,34 +72,26 @@ public class PumpLevelService extends CommandService {
             new ImmediateInstruction('P', 2, new CmdBody("DIN D 19")),
             new ImmediateInstruction('P', 2, new CmdBody("DIN E 21")),
             new ImmediateInstruction('P', 2, new CmdBody("DIN F 20")),
-            new ImmediateInstruction('R', 2, new WriteBody(DataType.DOUBLE, "CAA", 120)),
-            new ImmediateInstruction('R', 2, new WriteBody(DataType.DOUBLE, "CBB", 120)),
+            new ImmediateInstruction('R', 2, new WriteBody(DataType.DOUBLE, "CAA", 10)),
+            new ImmediateInstruction('R', 2, new WriteBody(DataType.DOUBLE, "CBB", 10)),
     };
-
+    @Autowired
+    SMSSender smsSender;
+    @Autowired
+    LevelInterpolationRepository levelInterpolationRepository;
+    @Autowired
+    GyreInterpolationRepository gyreInterpolationRepository;
+    @Autowired
+    PumpInstructionRepository pumpInstructionRepository;
     private float leftLevel, rightLevel, leftFloat1, leftFloat2, rightFloat1, rightFloat2;
     private float leftPower, rightPower, topoffPower;
-
     private boolean leftHeadOn, rightHeadOn;
     private Date leftHeadChangeTime, rightHeadChangeTime;
     private float totalDepth = 0;
     private DescriptiveStatistics depthFiveMin = new DescriptiveStatistics(30);
     private int leftLevelLoss, rightLevelLoss, pumpControlLoss;
-    private int topoffStatCount=0;
-
-    private long topoffDisableTimeMS = 0;
-
-    @Autowired
-    SMSSender smsSender;
-
-    @Autowired
-    LevelInterpolationRepository levelInterpolationRepository;
-
-    @Autowired
-    GyreInterpolationRepository gyreInterpolationRepository;
-
-    @Autowired
-    PumpInstructionRepository pumpInstructionRepository;
-
+    private int topoffStatCount = 0;
+    private long topoffDisableTime = 0;
     @Autowired
     private AlertService alertService;
 
@@ -131,7 +119,7 @@ public class PumpLevelService extends CommandService {
 
                 temp = SerialConversionUtil.getFloat(line.raw, 9);
                 if (0 <= temp && temp <= 40)
-                    rightLevel = temp; // See above for this issue
+                    rightLevel = temp;
 
                 leftFloat1 = SerialConversionUtil.getFloat(line.raw, 13);
                 leftFloat2 = SerialConversionUtil.getFloat(line.raw, 17);
@@ -142,9 +130,9 @@ public class PumpLevelService extends CommandService {
                 if (temp > 0 && temp < 999)
                     totalDepth = temp;
                 depthFiveMin.addValue(totalDepth);
-                if (topoffDisableTimeMS<=System.currentTimeMillis()) {
+                if (topoffDisableTime <= System.currentTimeMillis()) {
                     if ((System.currentTimeMillis() / 1000 % 10 == 1)) {
-                        if (totalDepth > 12 && totalDepth < 20 && leftFloat1 == 1) {
+                        if (totalDepth > 13 && totalDepth < 20) {
                             topoffOn();
                             System.out.println("Topping Off");
                             topoffCount++;
@@ -319,7 +307,7 @@ public class PumpLevelService extends CommandService {
 
             @Override
             public AlertStatus getStatus() {
-                if ((topoffCount > 20) || leftFloat1 == 0 || totalDepth > 14) { // TODO include float levels in this alert
+                if ((topoffCount > 20) || totalDepth > 18) { // TODO include float levels in this alert
                     return AlertStatus.Alerting;
                 } else {
                     return AlertStatus.Safe;
@@ -554,7 +542,7 @@ public class PumpLevelService extends CommandService {
 
             @Override
             public Double get() {
-                return (double)leftLevel;
+                return (double) leftLevel;
             }
         });
 
@@ -566,7 +554,7 @@ public class PumpLevelService extends CommandService {
 
             @Override
             public Double get() {
-                return (double)rightLevel;
+                return (double) rightLevel;
             }
         });
 
@@ -578,7 +566,7 @@ public class PumpLevelService extends CommandService {
 
             @Override
             public Double get() {
-                return (double)leftPower;
+                return (double) leftPower;
             }
         });
 
@@ -590,19 +578,19 @@ public class PumpLevelService extends CommandService {
 
             @Override
             public Double get() {
-                return (double)rightPower;
+                return (double) rightPower;
             }
         });
 
         historyService.addSupplier("Topoff Count", new ResettingSupplier() {
             @Override
             public void resetState() {
-                topoffStatCount=0;
+                topoffStatCount = 0;
             }
 
             @Override
             public Double get() {
-                return (double)topoffStatCount;
+                return (double) topoffStatCount;
             }
         });
 
@@ -614,8 +602,10 @@ public class PumpLevelService extends CommandService {
     }
 
     public PumpLevels getLevels() {
-        PumpLevels levels = new PumpLevels(new float[]{leftLevel, rightLevel, leftFloat1, leftFloat2, rightFloat1, rightFloat2}, new float[]{leftPower, rightPower, topoffPower}, new float[]{0, 0}, totalDepth, (float) depthFiveMin.getMean(), topoffStatCount,
-                new String[]{leftHeadOn ? "On" : "Off", rightHeadOn ? "On" : "Off"}, new Date[]{leftHeadChangeTime, rightHeadChangeTime}, new int[]{leftLevelLoss, rightLevelLoss, pumpControlLoss});
+        PumpLevels levels = new PumpLevels(new float[]{leftLevel, rightLevel, leftFloat1, leftFloat2, rightFloat1, rightFloat2},
+                new float[]{leftPower, rightPower, topoffPower}, new float[]{0, 0}, totalDepth,
+                (float) depthFiveMin.getMean(), topoffStatCount, new Date(topoffDisableTime), new String[]{leftHeadOn ? "On" : "Off",
+                rightHeadOn ? "On" : "Off"}, new Date[]{leftHeadChangeTime, rightHeadChangeTime}, new int[]{leftLevelLoss, rightLevelLoss, pumpControlLoss});
         return levels;
     }
 
@@ -638,7 +628,7 @@ public class PumpLevelService extends CommandService {
         bridge.writeInstruction(topoffOff);
     }
 
-    public void disableTopOff(long disableDurationMS){
-        this.topoffDisableTimeMS = System.currentTimeMillis()+disableDurationMS;
+    public void disableTopOff(long disableDurationMS) {
+        this.topoffDisableTime = System.currentTimeMillis() + disableDurationMS;
     }
 }
