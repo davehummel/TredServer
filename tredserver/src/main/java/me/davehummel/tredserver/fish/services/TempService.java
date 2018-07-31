@@ -161,22 +161,22 @@ public class TempService extends CommandService {
             public void validate() {
                 status = AlertStatus.Safe;
 
-                if (topTemp > 80) {
+                if (topTemp > 81) {
                     status = AlertStatus.Critical;
                 } else if (topTemp < 78) {
                     status = AlertStatus.Critical;
-                } else if (bottomTemp > 80) {
-                    status = AlertStatus.Critical;
+//                } else if (bottomTemp > 82) {
+//                    status = AlertStatus.Critical;
                 } else if (bottomTemp < 78) {
                     status = AlertStatus.Critical;
                 }
 
 
-                if (topTemp > 81.5) {
+                if (topTemp > 81.8) {
                     status = AlertStatus.Alerting;
                 } else if (topTemp < 77) {
                     status = AlertStatus.Alerting;
-                } else if (bottomTemp > 81) {
+                } else if (bottomTemp > 82.5) {
                     status = AlertStatus.Alerting;
                 } else if (bottomTemp < 77) {
                     status = AlertStatus.Alerting;

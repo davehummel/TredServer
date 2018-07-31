@@ -456,6 +456,8 @@
 	                    React.createElement(WaterLevelChart, null),
 	                    React.createElement(SensorOverview, null),
 	                    React.createElement(SensorChart, null),
+	                    React.createElement(EnvOverview, null),
+	                    React.createElement(EnvChart, null),
 	                    React.createElement(AdminActions, null)
 	                )
 	            );
@@ -674,9 +676,6 @@
 	                }, {
 	                    name: "Loading...",
 	                    data: [[0, 0]]
-	                }, {
-	                    name: "Loading...",
-	                    data: [[0, 0]]
 	                }]
 	            }
 	        };
@@ -697,7 +696,7 @@
 	
 	            client({
 	                method: 'GET',
-	                path: '/history/series?filters=toptemperature,bottomtemperature,outsidetemperature,envtemp'
+	                path: '/history/series?filters=toptemperature,bottomtemperature,outsidetemperature'
 	            }).done(function (response) {
 	                _this14.setState({
 	                    config: {
@@ -752,7 +751,7 @@
 	            config.series[0].color = '#3F8782';
 	            config.series[1].color = '#8A888B';
 	            config.series[2].color = '#018BAF';
-	            config.series[3].color = '#8A888B';
+	
 	            var viewControlTag = [0, 0, 200, 1500].join(' ');
 	            return React.createElement(
 	                'div',
@@ -806,9 +805,9 @@
 	
 	            client({ method: 'GET', path: '/temperature/readings' }).done(function (response) {
 	                _this16.setState({
-	                    topTemp: response.entity.topTemp,
-	                    bottomTemp: response.entity.bottomTemp,
-	                    outTemp: response.entity.outTemp
+	                    topTemp: response.entity.topTemp.toFixed(2),
+	                    bottomTemp: response.entity.bottomTemp.toFixed(2),
+	                    outTemp: response.entity.outTemp.toFixed(2)
 	                });
 	            });
 	        }
@@ -1284,7 +1283,7 @@
 	        key: 'componentDidMount',
 	        value: function componentDidMount() {
 	            this.getSensorData();
-	            setInterval(this.getSensorData, 8000);
+	            setInterval(this.getSensorData, 10000);
 	        }
 	    }, {
 	        key: 'getSensorData',
@@ -1338,16 +1337,268 @@
 	    return SensorOverview;
 	}(React.Component);
 	
-	var AdminActions = function (_React$Component15) {
-	    _inherits(AdminActions, _React$Component15);
+	var EnvChart = function (_React$Component15) {
+	    _inherits(EnvChart, _React$Component15);
+	
+	    function EnvChart(props) {
+	        _classCallCheck(this, EnvChart);
+	
+	        var _this25 = _possibleConstructorReturn(this, (EnvChart.__proto__ || Object.getPrototypeOf(EnvChart)).call(this, props));
+	
+	        _this25.state = {
+	            config: {
+	                title: {
+	                    title: {
+	                        text: null
+	                    }
+	                },
+	                chart: {
+	                    height: '230'
+	                },
+	                legend: {
+	                    enabled: false
+	                },
+	                yAxis: [{
+	                    title: { text: null }
+	                }, {
+	                    title: { text: null }
+	                }, {
+	                    title: { text: null }
+	                }, {
+	                    title: { text: null }
+	                }],
+	                time: {
+	                    useUTC: false
+	                },
+	                series: [{
+	                    name: "Loading...",
+	                    data: [[0, 0]]
+	                }, {
+	                    name: "Loading...",
+	                    data: [[0, 0]]
+	                }, {
+	                    name: "Loading...",
+	                    data: [[0, 0]]
+	                }, {
+	                    name: "Loading...",
+	                    data: [[0, 0]]
+	                }]
+	
+	            }
+	        };
+	        _this25.getSensorHistory = _this25.getSensorHistory.bind(_this25);
+	        return _this25;
+	    }
+	
+	    _createClass(EnvChart, [{
+	        key: 'componentDidMount',
+	        value: function componentDidMount() {
+	            this.getSensorHistory();
+	            setInterval(this.getSensorHistory, 5 * 60 * 1000);
+	        }
+	    }, {
+	        key: 'getSensorHistory',
+	        value: function getSensorHistory() {
+	            var _this26 = this;
+	
+	            client({ method: 'GET', path: '/history/series?filters=co2,tvoc,pressure,humidity' }).done(function (response) {
+	                _this26.setState({
+	                    config: {
+	                        plotOptions: {
+	                            line: {
+	                                marker: {
+	                                    enabled: false
+	                                }
+	                            }
+	                        },
+	                        credits: {
+	                            enabled: false
+	                        },
+	                        chart: {
+	                            type: 'line',
+	                            height: '230',
+	                            backgroundColor: '#17A598',
+	                            plotBackgroundColor: '#FFFFFF'
+	                        },
+	                        title: {
+	                            text: null
+	                        },
+	                        legend: {
+	                            enabled: false
+	                        },
+	                        yAxis: [{
+	                            title: { text: null },
+	                            labels: {
+	                                style: {
+	                                    color: '#30608B',
+	                                    fontSize: '14px'
+	                                }
+	                            }
+	
+	                        }, {
+	                            title: { text: null },
+	                            labels: {
+	                                style: {
+	                                    color: '#111111',
+	                                    fontSize: '14px'
+	                                }
+	                            },
+	                            opposite: true
+	                        }, {
+	                            title: { text: null },
+	                            labels: {
+	                                style: {
+	                                    color: '#F0806C',
+	                                    fontSize: '14px'
+	                                }
+	                            }
+	
+	                        }, {
+	                            title: { text: null },
+	                            labels: {
+	                                style: {
+	                                    color: '#DB381B',
+	                                    fontSize: '14px'
+	                                }
+	                            },
+	                            opposite: true
+	                        }],
+	                        xAxis: {
+	                            type: 'datetime',
+	                            labels: {
+	                                style: {
+	                                    color: '#FFFFFF',
+	                                    fontSize: '15px'
+	                                }
+	                            }
+	                        },
+	                        series: response.entity
+	                    }
+	                });
+	            });
+	        }
+	    }, {
+	        key: 'render',
+	        value: function render() {
+	            var config = this.state.config;
+	
+	            config.series[3].color = '#DB381B';
+	            config.series[2].color = '#F0806C';
+	            config.series[1].color = '#111111';
+	            config.series[0].color = '#30608B';
+	            config.series[3].yAxis = 3;
+	            config.series[2].yAxis = 2;
+	            config.series[1].yAxis = 1;
+	            config.series[0].yAxis = 0;
+	            var viewControlTag = [0, 0, 200, 1500].join(' ');
+	            return React.createElement(
+	                'div',
+	                { id: 'chart_bar' },
+	                React.createElement(
+	                    'svg',
+	                    { id: 'chart_tag', viewBox: viewControlTag },
+	                    React.createElement('rect', { x: 0, y: -100, rx: 80, ry: 80, width: 400, height: 1600, fill: "#17A598" }),
+	                    React.createElement(
+	                        'text',
+	                        { fontFamily: "Alegreya Sans", fill: "#F0F0F1", fontSize: 140,
+	                            transform: " rotate(-90 0,0) translate(-1060,150) " },
+	                        'Environment'
+	                    )
+	                ),
+	                React.createElement(
+	                    'div',
+	                    { id: 'chart' },
+	                    React.createElement(ReactHighcharts, { config: config })
+	                )
+	            );
+	        }
+	    }]);
+	
+	    return EnvChart;
+	}(React.Component);
+	
+	var EnvOverview = function (_React$Component16) {
+	    _inherits(EnvOverview, _React$Component16);
+	
+	    function EnvOverview(props) {
+	        _classCallCheck(this, EnvOverview);
+	
+	        var _this27 = _possibleConstructorReturn(this, (EnvOverview.__proto__ || Object.getPrototypeOf(EnvOverview)).call(this, props));
+	
+	        _this27.state = {};
+	        _this27.getSensorData = _this27.getSensorData.bind(_this27);
+	        return _this27;
+	    }
+	
+	    _createClass(EnvOverview, [{
+	        key: 'componentDidMount',
+	        value: function componentDidMount() {
+	            this.getSensorData();
+	            setInterval(this.getSensorData, 10000);
+	        }
+	    }, {
+	        key: 'getSensorData',
+	        value: function getSensorData() {
+	            var _this28 = this;
+	
+	            client({ method: 'GET', path: '/environment/readings' }).done(function (response) {
+	                _this28.setState({
+	                    pressure: response.entity.pressure.toFixed(2),
+	                    humidity: response.entity.humidity.toFixed(2),
+	                    co2: response.entity.co2.toFixed(0),
+	                    tvoc: response.entity.tvoc.toFixed(0)
+	                });
+	            });
+	        }
+	    }, {
+	        key: 'render',
+	        value: function render() {
+	
+	            return React.createElement(
+	                'div',
+	                { id: 'score_bar' },
+	                React.createElement(
+	                    'div',
+	                    { id: 'score_item', style: { "width": "25%", "backgroundColor": "#30608B" } },
+	                    'CO2(ppm) ',
+	                    this.state.co2
+	                ),
+	                React.createElement(
+	                    'div',
+	                    { id: 'score_item', style: { "width": "25%", "backgroundColor": "#DB381B" } },
+	                    'TVOC(ppm) ',
+	                    this.state.tvoc
+	                ),
+	                React.createElement(
+	                    'div',
+	                    { id: 'score_item', style: { "width": "25%", "backgroundColor": "#F0806C" } },
+	                    'Pressure (mbar) ',
+	                    this.state.pressure
+	                ),
+	                React.createElement(
+	                    'div',
+	                    { id: 'score_item', style: { "width": "24%", "backgroundColor": "#111111" } },
+	                    'Humidity ',
+	                    this.state.humidity,
+	                    '%'
+	                )
+	            );
+	        }
+	    }]);
+	
+	    return EnvOverview;
+	}(React.Component);
+	
+	var AdminActions = function (_React$Component17) {
+	    _inherits(AdminActions, _React$Component17);
 	
 	    function AdminActions(props) {
 	        _classCallCheck(this, AdminActions);
 	
-	        var _this25 = _possibleConstructorReturn(this, (AdminActions.__proto__ || Object.getPrototypeOf(AdminActions)).call(this, props));
+	        var _this29 = _possibleConstructorReturn(this, (AdminActions.__proto__ || Object.getPrototypeOf(AdminActions)).call(this, props));
 	
-	        _this25.state = {};
-	        return _this25;
+	        _this29.state = {};
+	        return _this29;
 	    }
 	
 	    _createClass(AdminActions, [{

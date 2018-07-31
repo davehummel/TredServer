@@ -131,6 +131,6 @@ html, body {
 }
 
 #chart{
-    width: 94%;
+    width: calc(99% - 32px);
     float: left;
 }

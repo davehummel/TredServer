@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.*;
@@ -36,6 +37,12 @@ public class PumpController {
     public HttpEntity<String> allPumpsOff(){
         pumpLevelService.allPumpsOff();
         return new ResponseEntity<String>("All Pumps off (for 5 min)", HttpStatus.OK);
+    }
+
+    @PostMapping("/setTargetDepth")
+    public HttpEntity<String> setTargetDepth(@RequestParam(value = "depth", defaultValue = "12.0")float depth){
+        pumpLevelService.setTargetDepth(depth);
+        return new ResponseEntity<String>("Setting target depth to :"+depth, HttpStatus.OK);
     }
 
     @PostMapping("/allOn")

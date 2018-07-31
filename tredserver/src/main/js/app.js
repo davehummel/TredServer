@@ -266,6 +266,8 @@ class OverviewApp extends React.Component {
                     <WaterLevelChart/>
                     <SensorOverview/>
                     <SensorChart/>
+                    <EnvOverview/>
+                    <EnvChart/>
                     <AdminActions/>
                 </div>
             </IntlProvider>
@@ -399,9 +401,6 @@ class TemperatureChart extends React.Component {
                     }, {
                         name: "Loading...",
                         data: [[0, 0]]
-                    }, {
-                        name: "Loading...",
-                        data: [[0, 0]]
                     }]
             }
         };
@@ -417,7 +416,7 @@ class TemperatureChart extends React.Component {
     getTempHistory() {
         client({
             method: 'GET',
-            path: '/history/series?filters=toptemperature,bottomtemperature,outsidetemperature,envtemp'
+            path: '/history/series?filters=toptemperature,bottomtemperature,outsidetemperature'
         }).done(response => {
             this.setState({
                 config: {
@@ -471,7 +470,7 @@ class TemperatureChart extends React.Component {
         config.series[0].color = '#3F8782';
         config.series[1].color = '#8A888B';
         config.series[2].color = '#018BAF';
-        config.series[3].color = '#8A888B';
+
         var viewControlTag = [0, 0, 200, 1500].join(' ')
         return (
             <div id="chart_bar">
@@ -505,9 +504,9 @@ class TemperatureOverview extends React.Component {
     getTemps() {
         client({method: 'GET', path: '/temperature/readings'}).done(response => {
             this.setState({
-                topTemp: response.entity.topTemp,
-                bottomTemp: response.entity.bottomTemp,
-                outTemp: response.entity.outTemp,
+                topTemp: response.entity.topTemp.toFixed(2),
+                bottomTemp: response.entity.bottomTemp.toFixed(2),
+                outTemp: response.entity.outTemp.toFixed(2),
             });
         });
     }
@@ -888,7 +887,7 @@ class SensorOverview extends React.Component {
 
     componentDidMount() {
         this.getSensorData();
-        setInterval(this.getSensorData, 8000);
+        setInterval(this.getSensorData, 10000);
     }
 
     getSensorData() {
@@ -918,6 +917,213 @@ class SensorOverview extends React.Component {
                 </div>
                 <div id='score_item' style={{"width": "24%", "backgroundColor": "#111111"}}>
                     DO (mg/L) {this.state.do}
+                </div>
+            </div>
+        )
+    }
+}
+
+class EnvChart extends React.Component {
+
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            config: {
+                title: {
+                    title: {
+                        text: null
+                    },
+                },
+                chart: {
+                    height: '230',
+                },
+                legend: {
+                    enabled: false
+                },
+                yAxis: [{
+                    title: {text: null}
+                }, {
+                    title: {text: null}
+                }, {
+                    title: {text: null}
+                }, {
+                    title: {text: null}
+                }],
+                time: {
+                    useUTC: false
+                },
+                series: [{
+                    name: "Loading...",
+                    data: [[0, 0]]
+                }, {
+                    name: "Loading...",
+                    data: [[0, 0]]
+                }, {
+                    name: "Loading...",
+                    data: [[0, 0]]
+                }, {
+                    name: "Loading...",
+                    data: [[0, 0]]
+                }]
+
+            }
+        };
+        this.getSensorHistory = this.getSensorHistory.bind(this);
+    }
+
+    componentDidMount() {
+        this.getSensorHistory();
+        setInterval(this.getSensorHistory, 5 * 60 * 1000);
+    }
+
+
+    getSensorHistory() {
+        client({method: 'GET', path: '/history/series?filters=co2,tvoc,pressure,humidity'}).done(response => {
+            this.setState({
+                config: {
+                    plotOptions: {
+                        line: {
+                            marker: {
+                                enabled: false
+                            }
+                        }
+                    },
+                    credits: {
+                        enabled: false
+                    },
+                    chart: {
+                        type: 'line',
+                        height: '230',
+                        backgroundColor: '#17A598',
+                        plotBackgroundColor: '#FFFFFF'
+                    },
+                    title: {
+                        text: null
+                    },
+                    legend: {
+                        enabled: false
+                    },
+                    yAxis: [{
+                        title: {text: null},
+                        labels: {
+                            style: {
+                                color: '#30608B',
+                                fontSize: '14px'
+                            }
+                        }
+
+                    }, {
+                        title: {text: null},
+                        labels: {
+                            style: {
+                                color: '#111111',
+                                fontSize: '14px'
+                            }
+                        },
+                        opposite: true
+                    }, {
+                        title: {text: null},
+                        labels: {
+                            style: {
+                                color: '#F0806C',
+                                fontSize: '14px'
+                            }
+                        }
+
+                    }, {
+                        title: {text: null},
+                        labels: {
+                            style: {
+                                color: '#DB381B',
+                                fontSize: '14px'
+                            }
+                        },
+                        opposite: true
+                    }],
+                    xAxis: {
+                        type: 'datetime',
+                        labels: {
+                            style: {
+                                color: '#FFFFFF',
+                                fontSize: '15px'
+                            }
+                        }
+                    },
+                    series: response.entity
+                }
+            });
+        });
+    }
+
+    render() {
+        var config = this.state.config;
+
+        config.series[3].color = '#DB381B';
+        config.series[2].color = '#F0806C';
+        config.series[1].color = '#111111';
+        config.series[0].color = '#30608B';
+        config.series[3].yAxis = 3;
+        config.series[2].yAxis = 2;
+        config.series[1].yAxis = 1;
+        config.series[0].yAxis = 0;
+        var viewControlTag = [0, 0, 200, 1500].join(' ')
+        return (
+            <div id="chart_bar">
+                <svg id="chart_tag" viewBox={viewControlTag}>
+                    <rect x={0} y={-100} rx={80} ry={80} width={400} height={1600} fill={"#17A598"}/>
+                    <text fontFamily={"Alegreya Sans"} fill={"#F0F0F1"} fontSize={140}
+                          transform={" rotate(-90 0,0) translate(-1060,150) "}>Environment
+                    </text>
+                </svg>
+                <div id="chart">
+                    <ReactHighcharts config={config}></ReactHighcharts>
+                </div>
+            </div>
+        )
+    }
+}
+
+class EnvOverview extends React.Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {};
+        this.getSensorData = this.getSensorData.bind(this);
+    }
+
+    componentDidMount() {
+        this.getSensorData();
+        setInterval(this.getSensorData, 10000);
+    }
+
+    getSensorData() {
+        client({method: 'GET', path: '/environment/readings'}).done(response => {
+            this.setState({
+                pressure: (response.entity.pressure).toFixed(2),
+                humidity: (response.entity.humidity).toFixed(2),
+                co2: (response.entity.co2).toFixed(0),
+                tvoc: (response.entity.tvoc).toFixed(0),
+            });
+        });
+    }
+
+
+    render() {
+
+        return (
+            <div id='score_bar'>
+                <div id='score_item' style={{"width": "25%", "backgroundColor":"#30608B" }}>
+                    CO2(ppm) {this.state.co2}
+                </div>
+                <div id='score_item' style={{"width": "25%", "backgroundColor": "#DB381B"}}>
+                    TVOC(ppm) {this.state.tvoc}
+                </div>
+                <div id='score_item' style={{"width": "25%", "backgroundColor":"#F0806C"}}>
+                    Pressure (mbar) {this.state.pressure}
+                </div>
+                <div id='score_item' style={{"width": "24%", "backgroundColor": "#111111" }}>
+                    Humidity {this.state.humidity}%
                 </div>
             </div>
         )

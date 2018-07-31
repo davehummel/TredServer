@@ -308,23 +308,23 @@ public class EnvSensorService extends CommandService {
             @Override
             public List<NotifyAction> getNotifyActions() {
                 List<NotifyAction> list = new ArrayList<>();
-                list.add(new NotifyAction() {
-                    @Override
-                    public void alert(Alert parent) {
-                        System.out.println("PH Alert:" + getStatusDetails());
-                        smsSender.sendSMS("PH Alert:" + getStatusDetails());
-                    }
-
-                    @Override
-                    public void endAlert(Alert parent) {
-                        System.out.println("PH OK:" + getStatusDetails());
-                        smsSender.sendSMS("PH OK:" + getStatusDetails());
-                    }
-
-                    @Override
-                    public void critical(Alert parent) {
-                    }
-                });
+//                list.add(new NotifyAction() {
+//                    @Override
+//                    public void alert(Alert parent) {
+//                        System.out.println("PH Alert:" + getStatusDetails());
+//                        smsSender.sendSMS("PH Alert:" + getStatusDetails());
+//                    }
+//
+//                    @Override
+//                    public void endAlert(Alert parent) {
+//                        System.out.println("PH OK:" + getStatusDetails());
+//                        smsSender.sendSMS("PH OK:" + getStatusDetails());
+//                    }
+//
+//                    @Override
+//                    public void critical(Alert parent) {
+//                    }
+//                });
 
                 return list;
             }
@@ -333,7 +333,7 @@ public class EnvSensorService extends CommandService {
         ph = 8;
         phTenMinutes.addValue(8);
 
-        alertService.loadAlert(alert);
+      //  alertService.loadAlert(alert);
 
     }
 

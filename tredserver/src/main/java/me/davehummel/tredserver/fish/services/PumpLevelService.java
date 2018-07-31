@@ -92,6 +92,8 @@ public class PumpLevelService extends CommandService {
     private int leftLevelLoss, rightLevelLoss, pumpControlLoss;
     private int topoffStatCount = 0;
     private long topoffDisableTime = 0;
+
+    private float targetDepth = 12;
     @Autowired
     private AlertService alertService;
 
@@ -132,7 +134,7 @@ public class PumpLevelService extends CommandService {
                 depthFiveMin.addValue(totalDepth);
                 if (topoffDisableTime <= System.currentTimeMillis()) {
                     if ((System.currentTimeMillis() / 1000 % 10 == 1)) {
-                        if (totalDepth > 13 && totalDepth < 20) {
+                        if (totalDepth > targetDepth && totalDepth < 20) {
                             topoffOn();
                             System.out.println("Topping Off");
                             topoffCount++;
@@ -630,5 +632,13 @@ public class PumpLevelService extends CommandService {
 
     public void disableTopOff(long disableDurationMS) {
         this.topoffDisableTime = System.currentTimeMillis() + disableDurationMS;
+    }
+
+    public float getTargetDepth() {
+        return targetDepth;
+    }
+
+    public void setTargetDepth(float targetDepth) {
+        this.targetDepth = targetDepth;
     }
 }
