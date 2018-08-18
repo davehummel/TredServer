@@ -285,13 +285,11 @@ public class EnvSensorService extends CommandService {
             @Override
             public AlertStatus getStatus() {
                 status = AlertStatus.Safe;
-
                 if (ph > 8.4) {
                     status = AlertStatus.Alerting;
                 } else if (ph < 7.7) {
                     status = AlertStatus.Alerting;
                 }
-
                 return status;
             }
 

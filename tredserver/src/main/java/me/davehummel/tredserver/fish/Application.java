@@ -44,8 +44,9 @@ public class Application {
 
             System.out.println("Setting up ports:");
 
-            // Note - expecting to have mapped ACM0 to 80 in ubuntu
-            String portName = "/dev/ttyS4";
+
+            //String portName = "/dev/ttyS4"; // This is the uart 1 on the Turbot gpio
+            String portName = "/dev/ttyACM0"; // This is the uart over usb port
             int portSpeed = 1000000;
             if (args.length > 0) {
                 System.out.println(args[0]);
