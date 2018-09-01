@@ -3,6 +3,8 @@ package me.davehummel.tredserver.services.alert;
 import com.twilio.Twilio;
 import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +17,8 @@ public class SMSSender {
 
     private String ACCOUNT_SID ;
     private String AUTH_TOKEN ;
+
+    Logger logger = LoggerFactory.getLogger(SMSSender.class);
 
     private static boolean armed = false;
 
@@ -37,7 +41,7 @@ public class SMSSender {
 
     public void sendSMS(String body) {
         if (!armed){
-            System.err.println("Sending SMS (Disarmed):"+body);
+            logger.error("Sending SMS (Disarmed):"+body);
             return;
         }
         for (PhoneNumber number : NUMBERS) {

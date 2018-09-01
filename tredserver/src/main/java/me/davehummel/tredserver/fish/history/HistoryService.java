@@ -1,5 +1,7 @@
 package me.davehummel.tredserver.fish.history;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -14,6 +16,8 @@ import java.util.*;
 
 @Controller
 public class HistoryService {
+
+    Logger logger = LoggerFactory.getLogger(HistorySeries.class);
 
     final private HashMap<String, ResettingSupplier> suppliers = new HashMap<String, ResettingSupplier>();
 
@@ -46,8 +50,7 @@ public class HistoryService {
                 entry.getValue().resetState();
                 historyEventRepository.save(event);
             }catch (Exception e){
-                System.err.println("History failed to capture metric");
-                e.printStackTrace();
+                logger.error("History failed to capture metric!",e);
             }
         }
 

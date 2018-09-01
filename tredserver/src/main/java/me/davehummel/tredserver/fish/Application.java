@@ -6,6 +6,7 @@ import me.davehummel.tredserver.fish.services.TempService;
 import me.davehummel.tredserver.gpio.TurbotGpio;
 import me.davehummel.tredserver.serial.NullSerialBridge;
 import me.davehummel.tredserver.serial.SerialBridge;
+import me.davehummel.tredserver.serial.jsscserial.JsscSerialBridge;
 import me.davehummel.tredserver.serial.jsscserial.RXTXSerialBridge;
 import me.davehummel.tredserver.services.CommandBridge;
 import me.davehummel.tredserver.services.InitService;
@@ -14,6 +15,8 @@ import me.davehummel.tredserver.services.ServiceManager;
 import me.davehummel.tredserver.services.alert.AlertService;
 import me.davehummel.tredserver.services.alert.SMSSender;
 import me.davehummel.tredserver.fish.history.HistoryService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -30,6 +33,7 @@ import org.springframework.context.annotation.ComponentScan;
 
 public class Application {
 
+    Logger logger = LoggerFactory.getLogger(Application.class);
 
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
@@ -39,24 +43,28 @@ public class Application {
     public CommandLineRunner commandLineRunner(ServiceManager serialServiceManager, InitService initService, ReadService readService, PumpLevelService pumpLevelService, TempService tempService, EnvSensorService envSensorService) {
         return args -> {
 
-
             TurbotGpio.setPinValue(483,false);
 
-            System.out.println("Setting up ports:");
+            Thread.sleep(500);
+
+            TurbotGpio.setPinValue(483,true);
+
+            Thread.sleep(500);
+
+            logger.info("Setting up ports:");
 
 
             //String portName = "/dev/ttyS4"; // This is the uart 1 on the Turbot gpio
             String portName = "/dev/ttyACM0"; // This is the uart over usb port
             int portSpeed = 1000000;
             if (args.length > 0) {
-                System.out.println(args[0]);
+                logger.info(args[0]);
                 String[] split = args[0].split("_");
                 portName = split[0];
                 portSpeed = Integer.parseInt(split[1]);
             }
-            System.out.println("Serial using :" + portName + "_" + portSpeed);
+            logger.info("Serial using :" + portName + "_" + portSpeed);
 
-            //  CommandBridge bridge = new CommandBridge(new MraaSerialBridge(0,3500000));
             SerialBridge sbridge = null;
 
             try{
@@ -64,15 +72,15 @@ public class Application {
                 sbridge.start();
                 SMSSender.arm();
             } catch (Exception e){
-                e.printStackTrace();
+                logger.error(e.getMessage());
                 try{
                     SMSSender.disarm();
-                    System.err.println("Trying windows port");
-                    sbridge = new RXTXSerialBridge("COM6", portSpeed);
+                    logger.error("Trying windows port");
+                    sbridge = new RXTXSerialBridge("COM12", portSpeed);
                     sbridge.start();
                     sbridge.setSimulation(true);
                 } catch (Exception ex){
-                    ex.printStackTrace();
+                    logger.error("Failed to setup windows port, using null bridge.",ex);
                     sbridge = new NullSerialBridge();
                 }
              }
@@ -95,7 +103,7 @@ public class Application {
 
             serialServiceManager.start();
 
-            TurbotGpio.setPinValue(483,true);
+
 
         };
     }

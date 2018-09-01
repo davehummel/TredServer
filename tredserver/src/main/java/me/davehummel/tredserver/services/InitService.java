@@ -1,20 +1,23 @@
 package me.davehummel.tredserver.services;
 
-import me.davehummel.tredserver.command.*;
-import me.davehummel.tredserver.gpio.TurbotGpio;
+import me.davehummel.tredserver.command.CmdBody;
+import me.davehummel.tredserver.command.DataType;
+import me.davehummel.tredserver.command.ImmediateInstruction;
+import me.davehummel.tredserver.command.ReadBody;
 import me.davehummel.tredserver.serial.StandardLine;
 import me.davehummel.tredserver.serial.TimeLine;
 import me.davehummel.tredserver.services.alert.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.Trigger;
 import org.springframework.scheduling.support.PeriodicTrigger;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Controller;
-import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
 
 /**
  * Created by dmhum_000 on 9/20/2015.
@@ -30,6 +33,8 @@ public class InitService extends CommandService {
 
     private final List<CommandListener> listeners = new ArrayList<>();
 
+    Logger logger = LoggerFactory.getLogger(InitService.class);
+
 
     private long lastDatePing;
 
@@ -37,6 +42,8 @@ public class InitService extends CommandService {
     private AlertService alertService;
     @Autowired
     private SMSSender smsSender;
+    @Autowired
+    private ServiceManager serialServiceManager;
 
 
     public InitService() {
@@ -81,7 +88,7 @@ public class InitService extends CommandService {
 
 
     public void start() {
-        System.out.println("Embedded Init Service Started!");
+        logger.info("Embedded Init Service Started!");
         if (bridge.isSimulation())
             bridge.writeInstruction(new ImmediateInstruction(
                     'Z',INITID,new ReadBody(DataType.BYTE,"ZZZ")));
@@ -139,26 +146,20 @@ public class InitService extends CommandService {
                 list.add(new NotifyAction() {
                     @Override
                     public void alert(Alert parent) {
-                        System.out.println("Embedded system is down!");
+                        logger.info("Embedded system is down!");
                         smsSender.sendSMS("Embedded system is down!");
                     }
 
                     @Override
                     public void endAlert(Alert parent) {
-                        System.out.println("Embedded system is back!");
+                        logger.info("Embedded system is back!");
                         smsSender.sendSMS("Embedded system is back!");
                     }
 
                     @Override
                     public void critical(Alert parent) {
-                        System.out.println("Restarting Service");
-                        TurbotGpio.setPinValue(483,false);
-                        try {
-                            Thread.currentThread().sleep(1000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                        TurbotGpio.setPinValue(483,true);
+                        logger.info("Restarting Service");
+                        serialServiceManager.forceEmbeddedRestart();
                         smsSender.sendSMS("Attempted embedded restart...");
                     }
                 });

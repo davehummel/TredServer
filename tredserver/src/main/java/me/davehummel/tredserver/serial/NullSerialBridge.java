@@ -1,9 +1,14 @@
 package me.davehummel.tredserver.serial;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Created by dmhum_000 on 2/4/2017.
  */
 public class NullSerialBridge implements SerialBridge {
+
+    Logger logger = LoggerFactory.getLogger(NullSerialBridge.class);
 
     private boolean isSimulation;
     @Override
@@ -13,6 +18,11 @@ public class NullSerialBridge implements SerialBridge {
 
     @Override
     public boolean getSimulation() {
+        return true;
+    }
+
+    @Override
+    public boolean isOpen() {
         return true;
     }
 
@@ -31,14 +41,14 @@ public class NullSerialBridge implements SerialBridge {
         try {
             Thread.sleep(1000000);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.error("read timeout",e);
         }
         return new byte[0];
     }
 
     @Override
     public void write(String text) throws SerialBridgeException {
-        System.out.println("NSB:"+text);
+        logger.error("NSB:"+text);
     }
 
     @Override

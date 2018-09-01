@@ -1,6 +1,7 @@
 package me.davehummel.tredserver.fish.services;
 
 import me.davehummel.tredserver.command.*;
+import me.davehummel.tredserver.fish.history.HistorySeries;
 import me.davehummel.tredserver.fish.history.HistoryService;
 import me.davehummel.tredserver.fish.history.ResettingSupplier;
 import me.davehummel.tredserver.fish.temperature.readonly.TemperatureReadings;
@@ -10,6 +11,8 @@ import me.davehummel.tredserver.services.CommandListener;
 import me.davehummel.tredserver.services.CommandService;
 import me.davehummel.tredserver.services.alert.*;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.Trigger;
 import org.springframework.scheduling.support.PeriodicTrigger;
@@ -38,6 +41,8 @@ public class TempService extends CommandService {
             new ImmediateInstruction('T', 2, new CmdBody("Enable")),
     };
 
+
+    Logger logger = LoggerFactory.getLogger(HistorySeries.class);
 
     private double topTemp, bottomTemp, outTemp;
 
@@ -99,7 +104,7 @@ public class TempService extends CommandService {
 
         bridge.writeInstruction(levelRead);
 
-        System.out.println("Temp Service Restarted!");
+        logger.info("Temp Service Restarted!");
     }
 
     @Override
@@ -227,13 +232,13 @@ public class TempService extends CommandService {
                 list.add(new NotifyAction() {
                     @Override
                     public void alert(Alert parent) {
-                        System.out.println("Temperature Alert:" + getStatusDetails());
+                        logger.info("Temperature Alert:" + getStatusDetails());
                         smsSender.sendSMS("Temperature Alert:" + getStatusDetails());
                     }
 
                     @Override
                     public void endAlert(Alert parent) {
-                        System.out.println("Temperature OK:" + getStatusDetails());
+                        logger.info("Temperature OK:" + getStatusDetails());
                         smsSender.sendSMS("Temperature OK:" + getStatusDetails());
                     }
 

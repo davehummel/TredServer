@@ -18,6 +18,8 @@ import me.davehummel.tredserver.services.CommandListener;
 import me.davehummel.tredserver.services.CommandService;
 import me.davehummel.tredserver.services.alert.*;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.Trigger;
 import org.springframework.scheduling.support.PeriodicTrigger;
@@ -72,9 +74,12 @@ public class PumpLevelService extends CommandService {
             new ImmediateInstruction('P', 2, new CmdBody("DIN D 19")),
             new ImmediateInstruction('P', 2, new CmdBody("DIN E 21")),
             new ImmediateInstruction('P', 2, new CmdBody("DIN F 20")),
-            new ImmediateInstruction('R', 2, new WriteBody(DataType.DOUBLE, "CAA", 10)),
-            new ImmediateInstruction('R', 2, new WriteBody(DataType.DOUBLE, "CBB", 10)),
+            new ImmediateInstruction('R', 2, new WriteBody(DataType.DOUBLE, "CAA", 12)),
+            new ImmediateInstruction('R', 2, new WriteBody(DataType.DOUBLE, "CBB", 12)),
     };
+
+    Logger logger = LoggerFactory.getLogger(PumpLevelService.class);
+
     @Autowired
     SMSSender smsSender;
     @Autowired
@@ -136,7 +141,7 @@ public class PumpLevelService extends CommandService {
                     if ((System.currentTimeMillis() / 1000 % 10 == 1)) {
                         if (totalDepth > targetDepth && totalDepth < 20) {
                             topoffOn();
-                            System.out.println("Topping Off");
+                            logger.info("Topping Off");
                             topoffCount++;
                         } else {
                             topoffCount = 0;
@@ -176,23 +181,23 @@ public class PumpLevelService extends CommandService {
                 if (temp != 0) {
                     leftHeadOn = true;
                     leftHeadChangeTime = new Date();
-                    System.out.println("Left on!!!!!!!!!!!!!!!!");
+                    logger.info("Left on!!!!!!!!!!!!!!!!");
                 }
                 temp = SerialConversionUtil.getU8Int(line.raw, 6);
                 if (temp != 0) {
                     leftHeadOn = false;
                     leftHeadChangeTime = new Date();
-                    System.out.println("Left off!!!!!!!!!!!!!!!");
+                    logger.info("Left off!!!!!!!!!!!!!!!");
                 }
                 temp = SerialConversionUtil.getU8Int(line.raw, 7);
                 if (temp != 0) {
-                    System.out.println("Right on!!!!!!!!!!!!!!!!");
+                    logger.info("Right on!!!!!!!!!!!!!!!!");
                     rightHeadOn = true;
                     rightHeadChangeTime = new Date();
                 }
                 temp = SerialConversionUtil.getU8Int(line.raw, 8);
                 if (temp != 0) {
-                    System.out.println("Right off!!!!!!!!!!!!!!!!");
+                    logger.info("Right off!!!!!!!!!!!!!!!!");
                     rightHeadOn = false;
                     rightHeadChangeTime = new Date();
                 }
@@ -225,14 +230,14 @@ public class PumpLevelService extends CommandService {
 
 
         //Set water interp levels
-        System.out.println("Loading level interp curves ");
+        logger.info("Loading level interp curves ");
         Iterable<LevelInterpolation> levelIter = levelInterpolationRepository.findAll();
         levelIter.forEach(interp -> {
             ImmediateInstruction inst;
             inst = LevelInterpUtility.createInterpInstruction(interp.getSide(), new HashMap<>(interp.getLevels()));
             bridge.writeInstruction(inst);
         });
-        System.out.println("Loading gyre interp curves ");
+        logger.info("Loading gyre interp curves ");
         GyreInterpolation gyre;// = gyreInterpolationRepository.findOne("pump");
 
 //        bridge.writeInstruction(LevelInterpUtility.createGyreInterpInstruction(4, gyre.getLevels(), InterpType.LINEAR));
@@ -274,7 +279,7 @@ public class PumpLevelService extends CommandService {
         bridge.writeInstruction(connectionQualityRead);
 
 
-        System.out.println("Pump Service Restarted!");
+        logger.info("Pump Service Restarted!");
     }
 
     @Override
@@ -332,7 +337,7 @@ public class PumpLevelService extends CommandService {
                 list.add(new NotifyAction() {
                     @Override
                     public void alert(Alert parent) {
-                        System.out.println("Top off Alert:" + getStatusDetails());
+                        logger.info("Top off Alert:" + getStatusDetails());
                         smsSender.sendSMS("Top off Alert:" + getStatusDetails());
                     }
 
@@ -468,7 +473,7 @@ public class PumpLevelService extends CommandService {
                 list.add(new NotifyAction() {
                     @Override
                     public void alert(Alert parent) {
-                        System.out.println("Pumps off for " + zeroPumpCounter + " minutes. Attempting to turn on...");
+                        logger.info("Pumps off for " + zeroPumpCounter + " minutes. Attempting to turn on...");
                         smsSender.sendSMS("Pumps off for " + zeroPumpCounter + " minutes.  Attempting to turn on...");
                         allPumpsOn();
                     }

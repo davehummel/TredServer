@@ -106,7 +106,6 @@ public class HeadingService extends CommandService {
 
 
     public void start() {
-        System.out.println("Heading Service Start!");
 
         xHist.clear();
         xHistCalc = false;

@@ -1,6 +1,8 @@
 package me.davehummel.tredserver.serial.jsscserial;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import purejavacomm.*;
 import me.davehummel.tredserver.serial.SerialBridge;
 import me.davehummel.tredserver.serial.SerialBridgeException;
@@ -32,8 +34,9 @@ public class RXTXSerialBridge implements SerialBridge {
         return isSimulation;
     }
 
-
     private final static byte SYNCBLOCK = -1;
+
+    Logger logger = LoggerFactory.getLogger(RXTXSerialBridge.class);
 
     private SerialPort serialPort;
     private InputStream inputStream;
@@ -41,6 +44,8 @@ public class RXTXSerialBridge implements SerialBridge {
     private PrintWriter printWriter;
     private final int rate;
     private final String port;
+    private boolean isOpen;
+
 
     public RXTXSerialBridge(String port, int rate) {
         this.port = port;
@@ -48,9 +53,22 @@ public class RXTXSerialBridge implements SerialBridge {
     }
 
     @Override
+    public boolean isOpen() {
+        return isOpen;
+    }
+
+    @Override
     public void start() throws SerialBridgeException {
+
+        if ( isOpen){
+            serialPort.close();
+            isOpen = false;
+        }
+
         CommPortIdentifier portIdentifier = null;
+
         try {
+            logger.info("Opening port:" + port);
             portIdentifier = CommPortIdentifier.getPortIdentifier(port);
         } catch (NoSuchPortException e) {
             throw new SerialBridgeException(e.getMessage());
@@ -71,9 +89,11 @@ public class RXTXSerialBridge implements SerialBridge {
                     SerialPort.STOPBITS_1,
                     SerialPort.PARITY_NONE);
             serialPort.setFlowControlMode(
-                    SerialPort.FLOWCONTROL_NONE);
+                    SerialPort.FLOWCONTROL_XONXOFF_IN&SerialPort.FLOWCONTROL_XONXOFF_OUT);
 
         } catch (UnsupportedCommOperationException e) {
+            logger.error("Failed to complete port initiation, closing!");
+            serialPort.close();
             throw new SerialBridgeException(e.getMessage());
         }
 
@@ -82,19 +102,20 @@ public class RXTXSerialBridge implements SerialBridge {
             printWriter = new PrintWriter(outputStream);
             inputStream = serialPort.getInputStream();
         } catch (IOException e) {
+            serialPort.close();
             throw new SerialBridgeException(e.getMessage());
         }
 
-        System.out.println("RXTX UART started");
+        logger.info("RXTX UART started");
+
+        isOpen = true;
     }
 
     @Override
     public void end() {
-//        try {
-//            jsscPort.closePort();
-//        } catch (SerialPortException e) {
-//            e.printStackTrace();
-//        }
+        serialPort.close();
+        serialPort = null;
+        isOpen = false;
     }
 
     private final byte[] headerBytes = new byte[4];
@@ -108,18 +129,16 @@ public class RXTXSerialBridge implements SerialBridge {
                 length+= inputStream.read(headerBytes, length, 4 - length);
             }
 
-//        System.out.print("Got Header:");
-//        for (byte b:temp){
-//            System.out.print(0xff&b);
-//            System.out.print(",");
-//        }
+        logger.debug("Got Header.");
+
             if (headerBytes[2] != SYNCBLOCK || headerBytes[3] != SYNCBLOCK) {
-                System.out.print("Read bad length header:");
+                StringBuilder sb = new StringBuilder("Read bad length header:");
                 for (byte b : headerBytes) {
-                    System.out.print(0xff & b);
-                    System.out.print(",");
+                    sb.append(0xff & b);
+                    sb.append(",");
                 }
-                System.out.println(" - Syncing....");
+                logger.error(sb.toString());
+                logger.error(" - Syncing....");
                 while (headerBytes[2] != SYNCBLOCK || headerBytes[3] != SYNCBLOCK) {
                     headerBytes[0] = headerBytes[1];
                     headerBytes[1] = headerBytes[2];
@@ -130,7 +149,7 @@ public class RXTXSerialBridge implements SerialBridge {
 
             length = SerialConversionUtil.getU16Int(headerBytes, 0);
             if (length > 255) {
-                System.out.println("Warning Length:" + length);
+                logger.warn("Warning Length:" + length);
             }
             byte[] temp = new byte[length];
             int offset = 0;
@@ -138,16 +157,20 @@ public class RXTXSerialBridge implements SerialBridge {
                 offset+= inputStream.read(temp, offset, length - offset);
             }
 
-//            System.out.print("Data len(" + length + ")[");
-//            for (byte b:temp){
-//                System.out.print(0xff&b);
-//                System.out.print(",");
-//            } System.out.println("]");
+            if (logger.isDebugEnabled()) {
+                StringBuilder sb = new StringBuilder("Data len(" + length + ")[");
+                for (byte b : temp) {
+                    sb.append(0xff & b);
+                    sb.append(",");
+                }
+                sb.append("]");
+                logger.debug(sb.toString());
+            }
 
             return temp;
 
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Failed to write,e");
             throw new SerialBridgeException(e.getMessage());
         }
 
@@ -155,7 +178,7 @@ public class RXTXSerialBridge implements SerialBridge {
 
     @Override
     synchronized public void write(String text) throws SerialBridgeException {
-            System.out.println("CMD>>" + text + "<<");
+            logger.debug("CMD>>" + text + "<<");
             printWriter.write(text);
             printWriter.flush();
     }

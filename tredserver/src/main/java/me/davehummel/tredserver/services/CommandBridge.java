@@ -1,11 +1,15 @@
 package me.davehummel.tredserver.services;
 
-import ch.qos.logback.core.net.SyslogOutputStream;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import me.davehummel.tredserver.command.Instruction;
-import me.davehummel.tredserver.serial.*;
+import me.davehummel.tredserver.serial.SerialBridge;
+import me.davehummel.tredserver.serial.SerialBridgeException;
+import me.davehummel.tredserver.serial.SerialConversionUtil;
+import me.davehummel.tredserver.serial.StandardLine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -17,11 +21,50 @@ import java.util.List;
  */
 public class CommandBridge {
     private static final int CHAR_MAX_SEND_BUFFER = 62;  // Seems to drop characters after the 63rd .. 62 is safe?
+    Logger logger = LoggerFactory.getLogger(CommandBridge.class);
 
+    private final SerialBridge serial;
+    private final List<CommandListener> listeners = new ArrayList<>();
+    private final LoadingCache<InstPair, Instruction> runInstructions = CacheBuilder.newBuilder().maximumSize(32).build(new CacheLoader<InstPair, Instruction>() {
+        @Override
+        public Instruction load(InstPair instPair) throws Exception {
+            return null;
+        }
+    });
     private SendResponse requiredResponse;
     private boolean oneLineMode = true;
     private int unprocessedSent = 0;
     private Object oneLineSync = new Object();
+    private boolean lastInstrunctionFailed = false;
+    volatile private boolean active = false;
+    private long offset = 0; // Add offset to input time
+    private Thread commandMonitor;
+    private Runnable runner = () -> {
+        while (active) {
+            try {
+                read();
+                synchronized (commandMonitor) {
+                    if (commandMonitor.isInterrupted())
+                        active = false;
+                }
+            } catch (SerialBridgeException sbe) {
+                logger.error("Serial connection failure",sbe);
+                active = false;
+            } catch (Exception t) {
+                logger.error("Command monitor failed to read",t);
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    logger.error("sleep for command bridge runner interrupted",e);
+                }
+            }
+        }
+        logger.info("CommandMonitor exiting!");
+    };
+
+    public CommandBridge(SerialBridge serial) {
+        this.serial = serial;
+    }
 
     public boolean isSimulation() {
         return serial.getSimulation();
@@ -34,13 +77,13 @@ public class CommandBridge {
     public void setLastInstrunctionFailed(boolean lastInstrunctionFailed, long time, String error) {
         this.lastInstrunctionFailed = lastInstrunctionFailed;
         if (lastInstrunctionFailed) {
-            System.out.println("Last Instruction Failed!");
+            logger.info("Last Instruction Failed!");
         } else {
-            System.out.println("Last Instruction Success!");
+            logger.info("Last Instruction Success!");
         }
         if (requiredResponse != null) {
             synchronized (requiredResponse) {
-                System.out.println("Notifying response");
+                logger.info("Notifying response");
                 requiredResponse.setSuccess(!lastInstrunctionFailed);
                 requiredResponse.setExecTime(time);
                 requiredResponse.setError(error);
@@ -58,71 +101,8 @@ public class CommandBridge {
         this.oneLineMode = oneLineMode;
     }
 
-    public class InstPair {
-        public final char modID;
-        public final long instID;
+    private void read() throws SerialBridgeException {
 
-        public InstPair(char modID, long instID) {
-            this.modID = modID;
-            this.instID = instID;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            InstPair instPair = (InstPair) o;
-
-            if (modID != instPair.modID) return false;
-            return instID == instPair.instID;
-
-        }
-
-        @Override
-        public int hashCode() {
-            int result = (int) modID;
-            result = 31 * result + (int) (instID ^ (instID >>> 32));
-            return result;
-        }
-    }
-
-    private final SerialBridge serial;
-    private final List<CommandListener> listeners = new ArrayList<>();
-    private final LoadingCache<InstPair, Instruction> runInstructions = CacheBuilder.newBuilder().maximumSize(32).build(new CacheLoader<InstPair, Instruction>() {
-        @Override
-        public Instruction load(InstPair instPair) throws Exception {
-            return null;
-        }
-    });
-
-    private boolean lastInstrunctionFailed = false;
-
-    private boolean active = false;
-    private long offset = 0; // Add offset to input time
-
-
-    private Thread commandMonitor;
-    private Runnable runner = () -> {
-        while (active) {
-            try {
-                read();
-                if (commandMonitor.isInterrupted())
-                    active = false;
-            } catch (Throwable t) {
-                t.printStackTrace();
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    };
-
-
-    private void read() {
-        try {
             byte[] data = serial.readLine();
             StandardLine line;
             if (data.length == 0) {
@@ -134,8 +114,7 @@ public class CommandBridge {
             } else {
                 line = StandardLine.createLine(data);
             }
-            System.out.print(">");
-            System.out.print(line);
+            logger.debug(line.toString());
             if (data.length == 5) {
                 markInstruction(line.module, line.instructionID);
             } else if (line.instructionID == 0 && line.module == 'Z') {
@@ -159,23 +138,14 @@ public class CommandBridge {
                         matched++;
                     }
                 }
-                System.out.println("< Matched " + matched + " listeners");
+                logger.debug("< Matched " + matched + " listeners");
             }
-        } catch (
-                SerialBridgeException e)
 
-        {
-            e.printStackTrace();
-        }
 
     }
 
     private void markInstruction(char module, long instructionID) {
-        System.out.println("Mrk!??");
-    }
-
-    public CommandBridge(SerialBridge serial) {
-        this.serial = serial;
+        logger.error("Mark instruction received??");
     }
 
     public void addCommandListener(CommandListener listener) {
@@ -186,13 +156,15 @@ public class CommandBridge {
         return listeners.remove(listener);
     }
 
-    public void start() {
-//        try {
-//       //     serial.start();
-//        } catch (SerialBridgeException e) {
-//            e.printStackTrace();
-//
-//        }
+
+    public void start() throws SerialBridgeException {
+        logger.info("Starting CommandMonitor");
+
+        if (!serial.isOpen()){
+            logger.info("Reopening serial");
+            serial.start();
+        }
+
         commandMonitor = new Thread(runner, "CommandMonitor");
         commandMonitor.setDaemon(true);
         active = true;
@@ -201,7 +173,18 @@ public class CommandBridge {
     }
 
     public void stop() {
+        logger.info("Trying to kill commandMonitor.");
         active = false;
+        synchronized ((commandMonitor)) {
+            commandMonitor.notify();
+        }
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            logger.error("Stop interrupted",e);
+        }
+
+
         serial.end();
     }
 
@@ -234,14 +217,14 @@ public class CommandBridge {
     private String partialSend(String text) throws SerialBridgeException {
         if (unprocessedSent >= CHAR_MAX_SEND_BUFFER) {
             try {
-                System.out.println("Throttling Sends!");
+                logger.error("Throttling Sends!");
                 oneLineSync.wait(2000);
                 if (unprocessedSent >= CHAR_MAX_SEND_BUFFER) {
-                    System.out.println("Line Sync Timed Out!");
+                    logger.error("Line Sync Timed Out!");
                     unprocessedSent = 0;
                 }
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                logger.error("Interrupted",e);
                 return "";
             }
         }
@@ -253,12 +236,11 @@ public class CommandBridge {
         String toSend = text.substring(0, remaining);
 
         unprocessedSent += toSend.length();
-        System.out.println(unprocessedSent);
+        logger.info("Partial sent, remaining = "+unprocessedSent);
         serial.write(toSend);
         return leftOver;
 
     }
-
 
     private void write(String text) throws SerialBridgeException {
 
@@ -270,14 +252,14 @@ public class CommandBridge {
             try {
                 Thread.currentThread().sleep(500);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                logger.error("Interrupted",e);
             }
             synchronized (requiredResponse) {
                 meteredWrite("IC 0 Z SE\n");
                 try {
                     requiredResponse.wait(500);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    logger.error("Interrupted",e);
                 }
             }
         }
@@ -289,22 +271,21 @@ public class CommandBridge {
             StringBuilder builder = new StringBuilder();
             command.toString(builder);
             builder.append('\n');
-            // System.out.println(">>"+builder.toString());
+            logger.debug(">>"+builder.toString());
             write(builder.toString());
 
         } catch (SerialBridgeException e) {
-            e.printStackTrace();
+            logger.error("Write failed",e);
             return false;
         }
         return true;
     }
 
-
     synchronized public boolean writeKill(int id) {
         try {
             write("K " + id + '\n');
         } catch (SerialBridgeException e) {
-            e.printStackTrace();
+            logger.error("Write failed",e);
             return false;
         }
         return true;
@@ -314,7 +295,7 @@ public class CommandBridge {
         try {
             write("KR\n");
         } catch (SerialBridgeException e) {
-            e.printStackTrace();
+            logger.error("Write failed",e);
             return false;
         }
         return true;
@@ -334,10 +315,10 @@ public class CommandBridge {
         }
         builder.append('\n');
         try {
-            //    System.out.println(">>"+builder.toString());
+            logger.debug(">>"+builder.toString());
             write(builder.toString());
         } catch (SerialBridgeException e) {
-            e.printStackTrace();
+            logger.error("Write failed",e);
             return false;
         }
         return true;
@@ -347,7 +328,7 @@ public class CommandBridge {
         try {
             write("R " + id + '\n');
         } catch (SerialBridgeException e) {
-            e.printStackTrace();
+            logger.error("Write failed",e);
             return false;
         }
         return true;
@@ -357,7 +338,7 @@ public class CommandBridge {
         try {
             write(text + '\n');
         } catch (SerialBridgeException e) {
-            e.printStackTrace();
+            logger.error("Write failed",e);
             return false;
         }
         return true;
@@ -367,7 +348,7 @@ public class CommandBridge {
         try {
             write("`");
         } catch (SerialBridgeException e) {
-            e.printStackTrace();
+            logger.error("Write failed",e);
             return false;
         }
         return true;
@@ -375,5 +356,34 @@ public class CommandBridge {
 
     public long getOffset() {
         return offset;
+    }
+
+    public class InstPair {
+        public final char modID;
+        public final long instID;
+
+        public InstPair(char modID, long instID) {
+            this.modID = modID;
+            this.instID = instID;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            InstPair instPair = (InstPair) o;
+
+            if (modID != instPair.modID) return false;
+            return instID == instPair.instID;
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = (int) modID;
+            result = 31 * result + (int) (instID ^ (instID >>> 32));
+            return result;
+        }
     }
 }

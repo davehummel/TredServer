@@ -92,14 +92,12 @@ public class LidarService extends CommandService {
                 if (line.module == 'P'){
                     pans[count] = servoAngleToRads(SerialConversionUtil.getU16Int(line.raw, 5));
                     tilts[count] = servoAngleToRads(SerialConversionUtil.getU16Int(line.raw, 7));
-                 //   System.out.println("P["+count+"]:"+pans[count]+"T"+tilts[count]);
                 }else if (line.module == 'C') {
                     if (count == 0) {
                         startTime = bridge.getOffset();
                     }
 
                     lidarDist[count] = (short) SerialConversionUtil.getU16Int(line.raw, 5);
-                  //  System.out.println("L["+count+"]:"+lidarDist[count]);
 
                     measure[count] = PointConversionUtility.convertPanTiltPoint(getOrigin(),getOrientation(),pans[count],tilts[count],lidarDist[count]);
 
@@ -128,9 +126,9 @@ public class LidarService extends CommandService {
 //        }
 //        System.out.println("}");
 
-        for(int i = 1; i < lidarRead.runCount ; i++){
-            System.out.println(measure[i].getX()+" "+measure[i].getY()+" "+measure[i].getZ());
-        }
+//        for(int i = 1; i < lidarRead.runCount ; i++){
+//            System.out.println(measure[i].getX()+" "+measure[i].getY()+" "+measure[i].getZ());
+//        }
 
     }
 
@@ -146,7 +144,7 @@ public class LidarService extends CommandService {
 
 
     public void start() {
-        System.out.println("Lidar Service Start!");
+     //   System.out.println("Lidar Service Start!");
 
         bridge.writeKill(LIDARPINGID);
         bridge.writeKill(PANPINGID);
@@ -199,7 +197,7 @@ public class LidarService extends CommandService {
             if (dif < 0.0174533){
                 dif = Math.abs(tilts[count] - servoAngleToRads(startTilt));
                 if (dif < 0.0174533){
-                    System.out.println("GO!"+pans[count]);
+             //       System.out.println("GO!"+pans[count]);
                     break;
                 }
             }

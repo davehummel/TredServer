@@ -18,6 +18,11 @@ public class JNISerialBridge implements SerialBridge {
         return isSimulation;
     }
 
+    @Override
+    public boolean isOpen() {
+        return true;
+    }
+
 
     @Override
     public void start() throws SerialBridgeException {

@@ -1,6 +1,7 @@
 package me.davehummel.tredserver.fish.services;
 
 import me.davehummel.tredserver.command.*;
+import me.davehummel.tredserver.fish.history.HistorySeries;
 import me.davehummel.tredserver.fish.lighting.persisted.lighttiming.LightTiming;
 import me.davehummel.tredserver.fish.lighting.persisted.lighttiming.LightTimingRepository;
 import me.davehummel.tredserver.services.CommandListener;
@@ -9,6 +10,8 @@ import me.davehummel.tredserver.services.alert.Alert;
 import me.davehummel.tredserver.services.alert.AlertService;
 import me.davehummel.tredserver.services.alert.AlertStatus;
 import me.davehummel.tredserver.services.alert.NotifyAction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.Trigger;
 import org.springframework.scheduling.support.PeriodicTrigger;
@@ -44,7 +47,7 @@ public class LightService extends CommandService {
     private final ScheduledInstruction lightOnEnd = new ScheduledInstruction('P' , LIGHTINSTRUCTIONID , 250,0,1, new WriteBody(DataType.BYTE,"GGG",0));
     private final ScheduledInstruction lightOffEnd = new ScheduledInstruction('P' , LIGHTINSTRUCTIONID , 250, 0 , 1 ,new WriteBody(DataType.BYTE,"HHH",0));
 
-
+    Logger logger = LoggerFactory.getLogger(LightService.class);
 
 
     @Autowired
@@ -66,7 +69,7 @@ public class LightService extends CommandService {
         }
 
 
-        System.out.println("Light Service Restarted!");
+        logger.info("Light Service Restarted!");
     }
 
     @Override

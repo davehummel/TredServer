@@ -1,5 +1,7 @@
 package me.davehummel.tredserver.fish;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
@@ -12,12 +14,14 @@ import javax.servlet.http.HttpServletResponse;
 @Component
 public class ActionInterceptor extends HandlerInterceptorAdapter {
 
+    Logger logger = LoggerFactory.getLogger(ActionInterceptor.class);
+
     private static final String GET = "GET";
     private final String ACTIVATIONPARM = "activation";
 
     public ActionInterceptor(
             @Value("${tank.activationkey:0000}") String activationKey) {
-        System.out.println(activationKey);
+        logger.info(activationKey);
         this.activationKey = activationKey;
     }
 
@@ -38,7 +42,7 @@ public class ActionInterceptor extends HandlerInterceptorAdapter {
 
         if (cookie != null && cookie.getValue() != null  ) {
             activation = cookie.getValue();
-            System.out.println("Cookie value found");
+            logger.info("Cookie value found");
         }
 
         boolean doIt = activationKey.equals(activation);
@@ -46,10 +50,10 @@ public class ActionInterceptor extends HandlerInterceptorAdapter {
         if (!doIt){
             activation = request.getParameter(ACTIVATIONPARM);
             doIt = activationKey.equals(activation);
-            System.out.println("Cookie wrong, trying parameter");
+            logger.info("Cookie wrong, trying parameter");
         }
         if (!doIt){
-            System.out.println("Ignoring post request without correct activation key");
+            logger.error("Ignoring post request without correct activation key");
         }
         return ( doIt );
     }

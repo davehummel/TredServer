@@ -1,9 +1,10 @@
 package me.davehummel.tredserver.fish;
 
 import me.davehummel.tredserver.command.DataType;
-import me.davehummel.tredserver.gpio.TurbotGpio;
 import me.davehummel.tredserver.services.ReadService;
 import me.davehummel.tredserver.services.ServiceManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +17,8 @@ public class BasicController {
     @Autowired
     private ReadService readService;
 
+    Logger logger = LoggerFactory.getLogger(BasicController.class);
+
 
     @RequestMapping(value = "/serial",method = RequestMethod.POST)
     String updateSerial(@RequestBody String command) {
@@ -23,7 +26,7 @@ public class BasicController {
         try {
             Thread.sleep(50);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.error("Interrupted",e);
         }
         boolean failed = serialServiceManager.getBridge().isLastInstrunctionFailed();
         return failed?"Failed ":"Ran " + command;
@@ -38,13 +41,7 @@ public class BasicController {
 
     @RequestMapping(value = "/reset",method = RequestMethod.POST)
     String readValue() {
-        TurbotGpio.setPinValue(483,false);
-        try {
-            Thread.currentThread().sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        TurbotGpio.setPinValue(483,true);
+        serialServiceManager.forceEmbeddedRestart();
         return "Reset";
     }
 }

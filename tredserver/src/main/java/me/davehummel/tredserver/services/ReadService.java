@@ -70,7 +70,7 @@ public class ReadService extends CommandService{
             try {
                 value.wait(timeout);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+
             }
             if (success == false)
                 return null;

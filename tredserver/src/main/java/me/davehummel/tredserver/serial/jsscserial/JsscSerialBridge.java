@@ -3,16 +3,19 @@ package me.davehummel.tredserver.serial.jsscserial;
 import jssc.SerialPort;
 import jssc.SerialPortException;
 import jssc.SerialPortList;
-import me.davehummel.tredserver.serial.*;
-
-import java.io.IOException;
-import java.util.Date;
+import me.davehummel.tredserver.serial.SerialBridge;
+import me.davehummel.tredserver.serial.SerialBridgeException;
+import me.davehummel.tredserver.serial.SerialConversionUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
  * Created by dmhum_000 on 4/3/2016.
  */
 public class JsscSerialBridge implements SerialBridge {
+
+    Logger logger = LoggerFactory.getLogger(JsscSerialBridge.class);
 
 
     private boolean isSimulation = false;
@@ -26,6 +29,11 @@ public class JsscSerialBridge implements SerialBridge {
     @Override
     public boolean getSimulation() {
         return isSimulation;
+    }
+
+    @Override
+    public boolean isOpen() {
+        return jsscPort.isOpened();
     }
 
 
@@ -42,6 +50,8 @@ public class JsscSerialBridge implements SerialBridge {
 
     @Override
     public void start() throws SerialBridgeException {
+        String[] portNames = SerialPortList.getPortNames();
+
         jsscPort = new SerialPort(port);
 
         try {
@@ -57,12 +67,11 @@ public class JsscSerialBridge implements SerialBridge {
                     SerialPort.PARITY_NONE);
 
         } catch (SerialPortException ex) {
-            ex.printStackTrace();
-            ;
+            logger.error("Failed to start serial:",ex);
             throw new SerialBridgeException(ex.getMessage());
         }
 
-        System.out.println("JSSC UART started");
+        logger.info("JSSC UART started");
     }
 
     @Override
@@ -87,37 +96,43 @@ public class JsscSerialBridge implements SerialBridge {
 //            System.out.print(",");
 //        }
             if (temp[2] != SYNCBLOCK || temp[3] != SYNCBLOCK) {
-                System.out.print("Read bad length header:");
+                StringBuilder sb = new StringBuilder("Read bad length header:");
                 for (byte b : temp) {
-                    System.out.print(0xff & b);
-                    System.out.print(",");
+                    sb.append(0xff & b);
+                    sb.append(",");
                 }
-                System.out.println(" - Syncing....");
+                logger.error(sb.toString());
+                logger.error(" - Syncing....");
                 while (temp[2] != SYNCBLOCK || temp[3] != SYNCBLOCK) {
                     temp[0] = temp[1];
                     temp[1] = temp[2];
                     temp[2] = temp[3];
                     temp[3] = jsscPort.readBytes(1)[0];
                 }
+                logger.error(" - Resynced!");
             }
 
             length = SerialConversionUtil.getU16Int(temp, 0);
             if (length > 255) {
-                System.out.println("Warning Length:" + length);
+                logger.warn("Warning Length:" + length);
             }
 
             temp = jsscPort.readBytes(length);
 
-//            System.out.print("Data len(" + length + ")[");
-//            for (byte b:temp){
-//                System.out.print(0xff&b);
-//                System.out.print(",");
-//            } System.out.println("]");
+            if (logger.isDebugEnabled()) {
+                StringBuilder sb = new StringBuilder("Data len(" + length + ")[");
+                for (byte b : temp) {
+                    sb.append(0xff & b);
+                    sb.append(",");
+                }
+                sb.append("]");
+                logger.debug(sb.toString());
+            }
 
             return temp;
 
         } catch (SerialPortException e) {
-            e.printStackTrace();
+            logger.error("Failed to read",e);
             throw new SerialBridgeException(e.getMessage());
         }
 
@@ -126,10 +141,10 @@ public class JsscSerialBridge implements SerialBridge {
     @Override
     synchronized public void write(String text) throws SerialBridgeException {
         try {
-            System.out.println("CMD>>"+text+"<<");
+            logger.debug("CMD>>"+text+"<<");
                 jsscPort.writeString(text);
         } catch (SerialPortException e) {
-            e.printStackTrace();
+            logger.error("Failed to write",e);
             throw new SerialBridgeException(e.getMessage());
         }
     }
@@ -139,12 +154,5 @@ public class JsscSerialBridge implements SerialBridge {
         this.timeout = timemeout;
     }
 
-    public static void PRINTPORTS() {
-        String[] portNames = SerialPortList.getPortNames();
 
-
-        for (int i = 0; i < portNames.length; i++) {
-            System.out.println(portNames[i]);
-        }
-    }
 }

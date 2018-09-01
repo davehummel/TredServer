@@ -15,4 +15,6 @@ public interface SerialBridge {
 
     void setSimulation(boolean isSimulation);
     boolean getSimulation();
+
+    boolean isOpen();
 }

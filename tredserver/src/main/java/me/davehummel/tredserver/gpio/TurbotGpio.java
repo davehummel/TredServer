@@ -9,15 +9,13 @@ import java.util.Map;
  */
 public class TurbotGpio {
 
-    static public void setPinValue(int pinNum, boolean high) {
+    static public void setPinValue(int pinNum, boolean high) throws IOException {
         ProcessBuilder pb = new ProcessBuilder("./pin_set.sh", Integer.toString(pinNum) , high?"1":"0");
         Map<String, String> env = pb.environment();
         pb.directory(new File("/home/turbot/embedded/embedded_linux/"));
-        try {
+
             Process p = pb.start();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
     }
 
 }

@@ -11,6 +11,8 @@ import me.davehummel.tredserver.services.CommandListener;
 import me.davehummel.tredserver.services.CommandService;
 import me.davehummel.tredserver.services.alert.*;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.Trigger;
 import org.springframework.scheduling.support.PeriodicTrigger;
@@ -55,6 +57,8 @@ public class EnvSensorService extends CommandService {
 
     @Autowired
     private HistoryService historyService;
+
+    Logger logger = LoggerFactory.getLogger(EnvSensorService.class);
 
 
     public EnvSensorService() {
@@ -137,7 +141,7 @@ public class EnvSensorService extends CommandService {
 
         bridge.writeInstruction(connectionQualityRead);
 
-        System.out.println("Temp Service Restarted!");
+        logger.info("Temp Service Restarted!");
     }
 
     @Override

@@ -25,7 +25,7 @@ public class WebConsoleService extends CommandService {
 
                 @Override
                 protected void processData(StandardLine line){
-                    System.out.println(line.raw);
+
                 }
             });
 

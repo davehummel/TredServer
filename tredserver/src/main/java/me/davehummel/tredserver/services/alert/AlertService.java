@@ -38,4 +38,11 @@ public class AlertService {
         }
         return relevant;
     }
+
+    public void clearAlerts() {
+
+        taskScheduler.shutdown();
+        taskScheduler.initialize();
+
+    }
 }
