@@ -23,6 +23,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 
+import java.io.IOException;
+
 @SpringBootApplication(scanBasePackages={"me.davehummel.tredserver.services"})
 //@Configuration
 @ComponentScan("me.davehummel.tredserver.services")
@@ -42,14 +44,17 @@ public class Application {
     @Bean
     public CommandLineRunner commandLineRunner(ServiceManager serialServiceManager, InitService initService, ReadService readService, PumpLevelService pumpLevelService, TempService tempService, EnvSensorService envSensorService) {
         return args -> {
+            try {
+                TurbotGpio.setPinValue(483, false);
 
-            TurbotGpio.setPinValue(483,false);
+                Thread.sleep(500);
 
-            Thread.sleep(500);
+                TurbotGpio.setPinValue(483, true);
 
-            TurbotGpio.setPinValue(483,true);
-
-            Thread.sleep(500);
+                Thread.sleep(500);
+            } catch (IOException e){
+                logger.error("Failed to interact with GPIO",e);
+            }
 
             logger.info("Setting up ports:");
 
