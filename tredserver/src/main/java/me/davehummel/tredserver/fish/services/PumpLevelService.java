@@ -98,7 +98,7 @@ public class PumpLevelService extends CommandService {
     private int topoffStatCount = 0;
     private long topoffDisableTime = 0;
 
-    private float targetDepth = 12;
+    private float targetDepth = 14;
     @Autowired
     private AlertService alertService;
 
