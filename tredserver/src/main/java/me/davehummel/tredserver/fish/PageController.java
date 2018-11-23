@@ -25,5 +25,11 @@ public class PageController {
         return "overview";
     }
 
+    @RequestMapping(value = "/history")
+    public String historyIndex() {
+        return "history";
+    }
+
+
 
 }

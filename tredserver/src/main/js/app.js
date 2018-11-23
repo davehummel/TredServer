@@ -6,7 +6,9 @@ const client = require('./client');
 
 import {FormattedRelative} from 'react-intl';
 import {IntlProvider} from 'react-intl';
+import NumericInput from 'react-numeric-input';
 
+const Datetime = require('react-datetime');
 const ReactHighcharts = require('react-highcharts'); // Expects that Highcharts was loaded in the code.
 
 
@@ -416,7 +418,7 @@ class TemperatureChart extends React.Component {
     getTempHistory() {
         client({
             method: 'GET',
-            path: '/history/series?filters=toptemperature,bottomtemperature,outsidetemperature'
+            path: '/history/series?filters=Top Temperature,Bottom Temperature,Outside Temperature'
         }).done(response => {
             this.setState({
                 config: {
@@ -579,7 +581,7 @@ class WaterLevelChart extends React.Component {
     getLevelHistory() {
         client({
             method: 'GET',
-            path: '/history/series?filters=rightpumplevel,leftpumplevel,topoffcount'
+            path: '/history/series?filters=Right Pump Level,Left Pump Level,Topoff Count'
         }).done(response => {
             this.setState({
                 config: {
@@ -769,7 +771,7 @@ class SensorChart extends React.Component {
 
 
     getSensorHistory() {
-        client({method: 'GET', path: '/history/series?filters=ph,salinity,orp,do'}).done(response => {
+        client({method: 'GET', path: '/history/series?filters=PH,Salinity,ORP,DO'}).done(response => {
             this.setState({
                 config: {
                     plotOptions: {
@@ -979,7 +981,7 @@ class EnvChart extends React.Component {
 
 
     getSensorHistory() {
-        client({method: 'GET', path: '/history/series?filters=co2,tvoc,pressure,humidity'}).done(response => {
+        client({method: 'GET', path: '/history/series?filters=CO2,TVOC,Pressure,Humidity'}).done(response => {
             this.setState({
                 config: {
                     plotOptions: {
@@ -1179,6 +1181,76 @@ class AdminActions extends React.Component {
 
 }
 
+class HistoryApp extends React.Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {};
+    }
+
+    render() {
+        return (
+            <IntlProvider locale={getLang()}>
+                <div>
+                    <HistoryParmChooser/>
+                </div>
+            </IntlProvider>
+        )
+    }
+}
+
+class HistoryParmChooser extends React.Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {};
+        this.handleChange1 = this.handleChange1.bind(this);
+        this.handleChange2 = this.handleChange2.bind(this);
+    }
+
+    componentDidMount() {
+        this.setState({
+            date1: new Date(new Date().getTime()-86400000),
+            date2: new Date(),
+            interval:10
+        });
+    }
+
+
+    render() {
+
+        return (
+            <div id='history_bar'>
+                <div style={{"float":"left"}}>
+                    <Datetime
+                        onChange={this.handleChangeD1} value = {this.state.date1} />
+                </div>
+            <div  style={{"float":"left" }}>
+                -
+            </div>
+                <div style={{"float":"left"}}>
+                    <Datetime
+                        onChange={this.handleChangeD2} value = {this.state.date2} />
+                </div>
+                <div  style={{"float":"left"}}>
+                    <NumericInput   onChange={this.handleChangeInt} min={10} max={10000} value={this.state.interval} step ={10} size = {1}/>
+                </div>
+
+            </div>
+        )
+    }
+
+    handleChangeD1(d){
+        this.setState({date1 : d});
+    }
+    handleChangeD2(d){
+        this.setState({date2 : d});
+    }
+    handleChangeInt(d){
+        this.setState({interval : d});
+    }
+}
+
 
 function ElementChooser(props) {
     const page = props.type;
@@ -1186,6 +1258,8 @@ function ElementChooser(props) {
         return <PumpApp/>
     else if (page == "overview")
         return <OverviewApp/>
+    else if (page == "history")
+        return <HistoryApp/>
 
     return null;
 }

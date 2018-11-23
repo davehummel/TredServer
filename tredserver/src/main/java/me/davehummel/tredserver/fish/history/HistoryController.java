@@ -51,7 +51,8 @@ public class HistoryController {
     }
 
     @GetMapping("/series")
-    public HttpEntity<List<HistorySeries>> getResults(@RequestParam(value = "filters", defaultValue = "") String filters, @RequestParam(value = "from", defaultValue = EMPTY_DATE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from, @RequestParam(value = "to", defaultValue = EMPTY_DATE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+    public HttpEntity<List<HistorySeries>> getResults(@RequestParam(value = "filters", defaultValue = "") String filters, @RequestParam(value = "from", defaultValue = EMPTY_DATE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+                                                      @RequestParam(value = "to", defaultValue = EMPTY_DATE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to, @RequestParam(value = "resolution", defaultValue = "1") Integer resolution) {
 
         if (EMPTY_DATETIME.equals(from)) {
             from = LocalDateTime.now().minusDays(1);
@@ -61,44 +62,38 @@ public class HistoryController {
             to = LocalDateTime.now();
         }
 
-        Set<String> seriesNames = new HashSet<>();
+        List<String> seriesNames = new ArrayList<>();
         if (!filters.isEmpty()) {
-            filters = filters.replace(" ", "");
-            filters = filters.toLowerCase();
-
             for (String filter : filters.split(",")) {
                 seriesNames.add(filter);
             }
         }
 
-        List<HistoryEvent> result = historyService.getResult(from, to);
+        List<HistoryEvent> result = historyService.getResult(from, to,seriesNames);
 
-        result.sort((o1, o2) -> o1.getId().getDate().compareTo(o2.getId().getDate()));
+        result.sort(Comparator.comparing(o -> o.getId().getDate()));
 
         Map<String, HistorySeries> seriesSet = new TreeMap<>();
 
         for (HistoryEvent event : result) {
-            if (!filters.isEmpty()) {
-                if (!seriesNames.contains(event.getId().getName().replace(" ", "").toLowerCase())) {
-                    continue;
-                }
-            }
+
             HistorySeries series = seriesSet.get(event.getId().getName());
             if (series == null) {
                 series = new HistorySeries();
                 series.setName(event.getId().getName());
+                series.setResolution(resolution);
                 seriesSet.put(series.getName(), series);
             }
 
-            Object[] item = new Object[]{event.getId().getDate().getTime(), event.value};
 
+            if ( event.value.equals(Double.NaN)) continue;
 
-            if (item[1].equals(Double.NaN)) continue;
-
-            series.getData().add(item);
+            series.addSummedData(event.getId().getDate().getTime(),event.value);
         }
 
         List<HistorySeries> outputList = new ArrayList<>(seriesSet.values());
+
+        outputList.forEach(s-> s.reduceSummedData());
 
         return new ResponseEntity<>(outputList, HttpStatus.OK);
     }

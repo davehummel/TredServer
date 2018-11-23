@@ -66,4 +66,19 @@ public class HistoryService {
 
         return historyEventRepository.findAllByIdDateBetween(fromDate,toDate);
     }
+
+    public List<HistoryEvent> getResult(LocalDateTime from, LocalDateTime to, List<String> names){
+        if (names == null || names.size()==0){
+            return getResult(from,to);
+        }
+
+        Date fromDate = Date.from(from.atZone(ZoneId.systemDefault()).toInstant());
+        Date toDate = Date.from(to.atZone(ZoneId.systemDefault()).toInstant());
+
+        return historyEventRepository.findByList(fromDate,toDate,names);
+    }
+
+    public void disarm() {
+        timer.cancel();
+    }
 }

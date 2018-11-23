@@ -17,5 +17,11 @@ import java.util.List;
 public interface HistoryEventRepository extends CrudRepository<HistoryEvent,HistoryID> {
 
     List<HistoryEvent> findAllByIdDateBetween(Date from,Date to);
+//    @NamedQuery(name = "EventLog.viewDatesInclude",
+//            query = "SELECT el FROM EventLog el WHERE el.timeMark >= :dateFrom AND "
+//                    + "el.timeMark <= :dateTo AND "
+//                    + "el.name IN :inclList")
+    @Query("SELECT h FROM HistoryEvent h WHERE h.id.date between :from and :to and h.id.name IN :names")
+    List<HistoryEvent> findByList(@Param("from") Date from, @Param("to") Date to, @Param("names") List<String> names );
 
 }

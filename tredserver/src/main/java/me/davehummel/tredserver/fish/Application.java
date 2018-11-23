@@ -42,7 +42,7 @@ public class Application {
     }
 
     @Bean
-    public CommandLineRunner commandLineRunner(ServiceManager serialServiceManager, InitService initService, ReadService readService, PumpLevelService pumpLevelService, TempService tempService, EnvSensorService envSensorService) {
+    public CommandLineRunner commandLineRunner(ServiceManager serialServiceManager, InitService initService, ReadService readService, PumpLevelService pumpLevelService, TempService tempService, EnvSensorService envSensorService, HistoryService historyService) {
         return args -> {
             try {
                 TurbotGpio.setPinValue(483, false);
@@ -80,6 +80,7 @@ public class Application {
                 logger.error(e.getMessage());
                 try{
                     SMSSender.disarm();
+                    historyService.disarm();
                     logger.error("Trying windows port");
                     sbridge = new RXTXSerialBridge("COM12", portSpeed);
                     sbridge.start();
