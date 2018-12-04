@@ -98,6 +98,24 @@ public class HistoryController {
         return new ResponseEntity<>(outputList, HttpStatus.OK);
     }
 
+    @GetMapping("/names")
+    public HttpEntity<List<String>> getNames(@RequestParam(value = "from", defaultValue = EMPTY_DATE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+                                                      @RequestParam(value = "to", defaultValue = EMPTY_DATE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+
+        if (EMPTY_DATETIME.equals(from)) {
+            from = LocalDateTime.now().minusDays(1);
+        }
+
+        if (EMPTY_DATETIME.equals(to)) {
+            to = LocalDateTime.now();
+        }
+
+
+        List<String> results = historyService.getNames(from, to);
+
+        return new ResponseEntity<>(results, HttpStatus.OK);
+    }
+
     @GetMapping("/alerts")
     public HttpEntity<List<AlertInfo>> getAlerts() {
 

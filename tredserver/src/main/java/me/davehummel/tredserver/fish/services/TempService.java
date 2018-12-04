@@ -240,8 +240,8 @@ public class TempService extends CommandService {
             }
         };
 
-        topTemp = 79.15f;
-        bottomTemp = 79.111f;
+        topTemp = 78.15f;
+        bottomTemp = 78.111f;
         outTemp = 72.111f;
 
         alertService.loadAlert(alert);

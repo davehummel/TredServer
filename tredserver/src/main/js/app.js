@@ -7,6 +7,7 @@ const client = require('./client');
 import {FormattedRelative} from 'react-intl';
 import {IntlProvider} from 'react-intl';
 import NumericInput from 'react-numeric-input';
+import moment from 'moment';
 
 const Datetime = require('react-datetime');
 const ReactHighcharts = require('react-highcharts'); // Expects that Highcharts was loaded in the code.
@@ -1166,7 +1167,7 @@ class AdminActions extends React.Component {
                     </button>
                     <div id="control_gap"><p></p></div>
                     <button id="control_button_r" style={{"width": "22%"}} onClick={this.handleClick}
-                            formAction="/update">Update Firmware
+                            formAction="/pump/restartDevices">Reset Remote Sensor
                     </button>
                 </div>
             </div>
@@ -1204,14 +1205,16 @@ class HistoryParmChooser extends React.Component {
     constructor(props) {
         super(props);
         this.state = {};
-        this.handleChange1 = this.handleChange1.bind(this);
-        this.handleChange2 = this.handleChange2.bind(this);
+        this.handleChangeD1 = this.handleChangeD1.bind(this);
+        this.handleChangeD2 = this.handleChangeD2.bind(this);
+        this.handleChangeInt = this.handleChangeInt.bind(this);
+        this.handleClick = this.handleClick.bind(this);
     }
 
     componentDidMount() {
         this.setState({
-            date1: new Date(new Date().getTime()-86400000),
-            date2: new Date(),
+            date1: moment().add(-1,'day'),
+            date2: moment(),
             interval:10
         });
     }
@@ -1235,6 +1238,11 @@ class HistoryParmChooser extends React.Component {
                 <div  style={{"float":"left"}}>
                     <NumericInput   onChange={this.handleChangeInt} min={10} max={10000} value={this.state.interval} step ={10} size = {1}/>
                 </div>
+                <div  style={{"float":"right"}}>
+                    <button  style={{"width": "22%"}} onClick={this.handleClick}>Update Chart
+                    </button>
+                </div>
+
 
             </div>
         )
@@ -1249,6 +1257,13 @@ class HistoryParmChooser extends React.Component {
     handleChangeInt(d){
         this.setState({interval : d});
     }
+
+    handleClick(d){
+        console.log(this.state.date1);
+    }
+
+
+
 }
 
 

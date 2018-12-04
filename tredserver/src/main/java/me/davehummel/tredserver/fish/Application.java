@@ -105,8 +105,6 @@ public class Application {
 
             serialServiceManager.addService(envSensorService);
 
-     //       serialServiceManager.addService(lightService);  // Light is now on a simple timer
-
             serialServiceManager.start();
 
 

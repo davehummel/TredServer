@@ -69,13 +69,19 @@ public class PumpLevelService extends CommandService {
     //  private final ScheduledInstruction topoffOnEnd = new ScheduledInstruction('R', POWERHEADPINGID, 2000, 0, 1, new WriteBody(DataType.DOUBLE, "CCC", 0));
     private final ImmediateInstruction topoffOff = new ImmediateInstruction('R', POWERHEADPINGID, new WriteBody(DataType.DOUBLE, "CCC", 0));
 
+    private final ImmediateInstruction power3Off = new ImmediateInstruction('P',2,new WriteBody(DataType.BYTE, "GGG", 1));
+    private final ImmediateInstruction power3On = new ImmediateInstruction('P',2,new WriteBody(DataType.BYTE, "HHH", 1));
+//    private final ScheduledInstruction power3KeepOn = new ScheduledInstruction('P',PUMPPOWERPINGID,100,60000, 0,new WriteBody(DataType.BYTE, "HHH", 1));
+
     private final ImmediateInstruction[] setupPWM = new ImmediateInstruction[]{
             new ImmediateInstruction('P', 2, new CmdBody("DIN C 18")),
             new ImmediateInstruction('P', 2, new CmdBody("DIN D 19")),
             new ImmediateInstruction('P', 2, new CmdBody("DIN E 21")),
             new ImmediateInstruction('P', 2, new CmdBody("DIN F 20")),
-            new ImmediateInstruction('R', 2, new WriteBody(DataType.DOUBLE, "CAA", 12)),
-            new ImmediateInstruction('R', 2, new WriteBody(DataType.DOUBLE, "CBB", 12)),
+//            new ImmediateInstruction('P', 2, new CmdBody("BLK G 34 400")),
+//            new ImmediateInstruction('P', 2, new CmdBody("BLK H 33 400")),
+            new ImmediateInstruction('R', 2, new WriteBody(DataType.DOUBLE, "CAA", 82)),
+            new ImmediateInstruction('R', 2, new WriteBody(DataType.DOUBLE, "CBB", 82)),
     };
 
     Logger logger = LoggerFactory.getLogger(PumpLevelService.class);
@@ -275,6 +281,7 @@ public class PumpLevelService extends CommandService {
 
         bridge.writeInstruction(levelRead);
         bridge.writeInstruction(pumpRead);
+
         bridge.writeInstruction(powerHeadRead);
         bridge.writeInstruction(connectionQualityRead);
 
@@ -476,6 +483,7 @@ public class PumpLevelService extends CommandService {
                         logger.info("Pumps off for " + zeroPumpCounter + " minutes. Attempting to turn on...");
                         smsSender.sendSMS("Pumps off for " + zeroPumpCounter + " minutes.  Attempting to turn on...");
                         allPumpsOn();
+                        restartRadioDevice();
                     }
 
                     @Override
@@ -600,7 +608,6 @@ public class PumpLevelService extends CommandService {
                 return (double) topoffStatCount;
             }
         });
-
     }
 
 
@@ -633,6 +640,16 @@ public class PumpLevelService extends CommandService {
 
     public void topoffOff() {
         bridge.writeInstruction(topoffOff);
+    }
+
+    public void restartRadioDevice(){
+        bridge.writeInstruction(power3Off);
+        try {
+            Thread.sleep(1800);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        bridge.writeInstruction(power3On);
     }
 
     public void disableTopOff(long disableDurationMS) {

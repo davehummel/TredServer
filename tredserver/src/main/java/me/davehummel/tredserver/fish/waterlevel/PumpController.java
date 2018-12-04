@@ -7,10 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.*;
 
@@ -68,6 +65,12 @@ public class PumpController {
     public HttpEntity<String> topOffDisable(){
         pumpLevelService.disableTopOff(24*60*60*1000); // 24 hours
         return new ResponseEntity<String>("Topoff Disabled", HttpStatus.OK);
+    }
+
+    @PostMapping("/restartDevices")
+    public HttpEntity<String> restartDevices(){
+        pumpLevelService.restartRadioDevice();
+        return new ResponseEntity<String>("Restarted Wireless", HttpStatus.OK);
     }
 
 }

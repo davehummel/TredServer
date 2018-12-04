@@ -40,7 +40,7 @@ public class AlertService {
     }
 
     public void clearAlerts() {
-
+        alerts.clear();
         taskScheduler.shutdown();
         taskScheduler.initialize();
 

@@ -78,6 +78,14 @@ public class HistoryService {
         return historyEventRepository.findByList(fromDate,toDate,names);
     }
 
+    public List<String> getNames(LocalDateTime from, LocalDateTime to){
+
+        Date fromDate = Date.from(from.atZone(ZoneId.systemDefault()).toInstant());
+        Date toDate = Date.from(to.atZone(ZoneId.systemDefault()).toInstant());
+
+        return historyEventRepository.getEventNames(fromDate,toDate);
+    }
+
     public void disarm() {
         timer.cancel();
     }
