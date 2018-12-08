@@ -78,8 +78,8 @@ public class PumpLevelService extends CommandService {
             new ImmediateInstruction('P', 2, new CmdBody("DIN D 19")),
             new ImmediateInstruction('P', 2, new CmdBody("DIN E 21")),
             new ImmediateInstruction('P', 2, new CmdBody("DIN F 20")),
-//            new ImmediateInstruction('P', 2, new CmdBody("BLK G 34 400")),
-//            new ImmediateInstruction('P', 2, new CmdBody("BLK H 33 400")),
+            new ImmediateInstruction('P', 2, new CmdBody("BLK G 33 400")),
+            new ImmediateInstruction('P', 2, new CmdBody("BLK H 34 400")),
             new ImmediateInstruction('R', 2, new WriteBody(DataType.DOUBLE, "CAA", 82)),
             new ImmediateInstruction('R', 2, new WriteBody(DataType.DOUBLE, "CBB", 82)),
     };
