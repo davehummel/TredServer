@@ -40,10 +40,10 @@ public class PumpLevelService extends CommandService {
 
     public static final int PUMPINSTRUCTIONID = 17250;
     public static final int CONNECTIONPINGID = 17251;
-    public static final String RUNTINST = "run";
     private static final int PUMPPOWERPINGID = 17246;
     private static final int PUMPLEVELPINGID = 17248;
     private static final int POWERHEADPINGID = 17249;
+    public static final String RUNTINST = "run";
     private static final String OFFINST = "off";
     private static final String LEVELSINST = "levels";
     private static final String DECIDEINST = "gyres";
@@ -74,14 +74,21 @@ public class PumpLevelService extends CommandService {
 //    private final ScheduledInstruction power3KeepOn = new ScheduledInstruction('P',PUMPPOWERPINGID,100,60000, 0,new WriteBody(DataType.BYTE, "HHH", 1));
 
     private final ImmediateInstruction[] setupPWM = new ImmediateInstruction[]{
-            new ImmediateInstruction('P', 2, new CmdBody("DIN C 18")),
-            new ImmediateInstruction('P', 2, new CmdBody("DIN D 19")),
-            new ImmediateInstruction('P', 2, new CmdBody("DIN E 21")),
-            new ImmediateInstruction('P', 2, new CmdBody("DIN F 20")),
+            new ImmediateInstruction('P', 2, new CmdBody("BLK C 14 500")),
+            new ImmediateInstruction('P', 2, new CmdBody("BLK D 15 500")),
+            new ImmediateInstruction('P', 2, new CmdBody("BLK E 39 500")),
+            new ImmediateInstruction('P', 2, new CmdBody("BLK F 38 500")),
             new ImmediateInstruction('P', 2, new CmdBody("BLK G 33 400")),
             new ImmediateInstruction('P', 2, new CmdBody("BLK H 34 400")),
-            new ImmediateInstruction('R', 2, new WriteBody(DataType.DOUBLE, "CAA", 82)),
-            new ImmediateInstruction('R', 2, new WriteBody(DataType.DOUBLE, "CBB", 82)),
+            new ImmediateInstruction('R', 2, new WriteBody(DataType.DOUBLE, "CAA", 120)),
+            new ImmediateInstruction('R', 2, new WriteBody(DataType.DOUBLE, "CBB", 120)),
+    };
+
+    private final ScheduledInstruction[] powerheadOffOnSet = new ScheduledInstruction[]{
+            new ScheduledInstruction('P', PUMPINSTRUCTIONID, 0, 0, 1, new WriteBody(DataType.BYTE, "DDD", 1)),
+            new ScheduledInstruction('P', PUMPINSTRUCTIONID, 1000, 0, 1, new WriteBody(DataType.BYTE, "FFF", 1)),
+            new ScheduledInstruction('P', PUMPINSTRUCTIONID, 300000, 0, 1, new WriteBody(DataType.BYTE, "CCC", 1)),
+            new ScheduledInstruction('P', PUMPINSTRUCTIONID, 310000, 0, 1, new WriteBody(DataType.BYTE, "EEE", 1))
     };
 
     Logger logger = LoggerFactory.getLogger(PumpLevelService.class);
@@ -244,13 +251,7 @@ public class PumpLevelService extends CommandService {
             bridge.writeInstruction(inst);
         });
         logger.info("Loading gyre interp curves ");
-        GyreInterpolation gyre;// = gyreInterpolationRepository.findOne("pump");
 
-//        bridge.writeInstruction(LevelInterpUtility.createGyreInterpInstruction(4, gyre.getLevels(), InterpType.LINEAR));
-
-        gyre = gyreInterpolationRepository.findOne("head");
-//
-        bridge.writeInstruction(LevelInterpUtility.createGyreInterpInstruction(5, gyre.getLevels(), InterpType.STEP));
 
         bridge.writeKill(PUMPLEVELPINGID);
         bridge.writeKill(PUMPPOWERPINGID);
@@ -285,6 +286,9 @@ public class PumpLevelService extends CommandService {
         bridge.writeInstruction(powerHeadRead);
         bridge.writeInstruction(connectionQualityRead);
 
+        for (ScheduledInstruction instruction : this.powerheadOffOnSet) {
+            bridge.writeInstruction(instruction);
+        }
 
         logger.info("Pump Service Restarted!");
     }
@@ -509,7 +513,7 @@ public class PumpLevelService extends CommandService {
 
         {
             inst = new PumpInstruction(OFFINST);
-            inst.setValue("IC 2 C FUN P9 w[$BP:AAA=#B0],w[$BP:BBB=#B0],w[$BP:CCC=#B0],w[$BP:DDD={{t/#T200}%#T2}],w[$BP:EEE=#B0],w[$BP:FFF={{{t/#T200}+#T1}%#T2}],w[$BP:GGG=#B0],w[$BP:HHH=#B0],w[$BP:III=#B0],w[$BP:JJJ=#B0]");
+            inst.setValue("IC 2 C FUN P1 ?{$BP:VRX==#B0}[$FC:FNP.3,$FC:FNP.9]");
             pumpInstructionRepository.save(inst);
         }
 
@@ -518,7 +522,7 @@ public class PumpLevelService extends CommandService {
 
         {
             inst = new PumpInstruction(LEVELSINST);
-            inst.setValue("IC 2 C FUN P2 w[$FP:VRA=i4[{t%#T300000}]],w[$FP:VRB=i4[{#T300000-{t%#T300000}}]],w[$FP:VRC=i5[{{t/#T5}%#T80000}]],w[$FW:VRA=i0[$UW:AAA]],w[$FW:VRB=i1[$UW:BBB]],w[$FW:VRC=i2[$UW:CCC]]");
+            inst.setValue("IC 2 C FUN P2 w[$FR:VRA=i0[$FR:AAA]],w[$FR:VRB=i1[$FR:BAA]],w[$FR:VRO={{$FR:VRO*#F0.95}+{$FR:VRA-$FR:VRB}}]");
             pumpInstructionRepository.save(inst);
         }
 
@@ -527,7 +531,7 @@ public class PumpLevelService extends CommandService {
 
         {
             inst = new PumpInstruction(DECIDEINST);
-            inst.setValue("IC 2 C FUN P1 $BC:FNP.2,w[$BP:DDD=?{$FP:VRC==#B2}[#B1,#B0]],w[$BP:FFF=?{$FP:VRC==#B4}[#B1,#B0]],?{$BP:VRX==#B0}[$BC:FNP.3,$BC:FNP.9]");
+            inst.setValue("IC 2 C FUN P9 w[$DR:CAA=#F0],w[$DR:CBB=#F0]");
             pumpInstructionRepository.save(inst);
         }
 
@@ -536,7 +540,7 @@ public class PumpLevelService extends CommandService {
 
         {
             inst = new PumpInstruction(PUMPSETINST);
-            inst.setValue("IC 2 C FUN P3 w[$BP:CCC=?{$FP:VRC==#B1}[#B1,#B0]],w[$BP:EEE=?{$FP:VRC==#B3}[#B1,#B0]],w[$BP:AAA={$FP:VRA*{#F24+{{$FW:VRB-$FW:VRA}*#F10}}}],w[$BP:BBB={$FP:VRB*{#F20+{{$FW:VRA-$FW:VRB}*#F10}}}]");
+            inst.setValue("IC 2 C FUN P3 w[$DR:CAA={#F125-$FR:VRO}],w[$DR:CBB={#F125+$FR:VRO}]");
             pumpInstructionRepository.save(inst);
         }
 
@@ -545,7 +549,7 @@ public class PumpLevelService extends CommandService {
 
         {
             inst = new PumpInstruction(RUNTINST);
-            inst.setValue("SC " + PUMPINSTRUCTIONID + "C 1000 100 0 EXE P1");
+            inst.setValue("SC " + PUMPINSTRUCTIONID + "SC 17250 C 1000 1000 0 EXE P2 P1");
             pumpInstructionRepository.save(inst);
         }
 
@@ -627,6 +631,9 @@ public class PumpLevelService extends CommandService {
     public void allPumpsOff() {
         bridge.writeInstruction(allPumpsOff);
         bridge.writeInstruction(allPumpsOffEnd);
+        for (ScheduledInstruction instruction:powerheadOffOnSet){
+            bridge.writeInstruction(instruction);
+        }
     }
 
     public void allPumpsOn() {
